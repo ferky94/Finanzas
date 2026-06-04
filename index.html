@@ -204,10 +204,11 @@ select.form-input{-webkit-appearance:none;appearance:none;}
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" onclick="showScreen('dashboard')">Dashboard</button>
+    <button class="tab active" onclick="showScreen('dashboard')">Inicio</button>
     <button class="tab" onclick="showScreen('gastos')">Gastos <span id="gastosBadge" class="badge" style="display:none">0</span></button>
+    <button class="tab" onclick="showScreen('tarjetas')">Tarjetas</button>
     <button class="tab" onclick="showScreen('pagos')">Pagos</button>
-    <button class="tab" onclick="showScreen('historial')">Historial</button>
+    <button class="tab" onclick="showScreen('historial')">Más</button>
   </div>
 
   <!-- CONTENT -->
@@ -288,6 +289,14 @@ select.form-input{-webkit-appearance:none;appearance:none;}
       </div>
     </div>
 
+    <!-- TARJETAS -->
+    <div id="screen-tarjetas" class="screen">
+      <div class="section-header">
+        <span class="section-title">Mis Tarjetas</span>
+      </div>
+      <div id="tarjetasList"></div>
+    </div>
+
     <!-- GASTOS -->
     <div id="screen-gastos" class="screen">
       <div class="section-header">
@@ -358,13 +367,17 @@ select.form-input{-webkit-appearance:none;appearance:none;}
       <span class="nav-icon">🧾</span>
       <span class="nav-label">Gastos</span>
     </button>
-    <button class="nav-item" onclick="showScreen('pagos')">
+    <button class="nav-item" onclick="showScreen('tarjetas')">
       <span class="nav-icon">💳</span>
+      <span class="nav-label">Tarjetas</span>
+    </button>
+    <button class="nav-item" onclick="showScreen('pagos')">
+      <span class="nav-icon">📅</span>
       <span class="nav-label">Pagos</span>
     </button>
     <button class="nav-item" onclick="showScreen('historial')">
       <span class="nav-icon">📈</span>
-      <span class="nav-label">Historial</span>
+      <span class="nav-label">Más</span>
     </button>
   </nav>
 </div>
@@ -433,6 +446,32 @@ select.form-input{-webkit-appearance:none;appearance:none;}
   </div>
 </div>
 
+<!-- MODAL PAGO TARJETA -->
+<div class="modal-overlay" id="modalPagoTC">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalPagoTCTitle">💳 Registrar Pago</div>
+    <p style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:16px">
+      Saldo actual: <strong id="modalPagoTCSaldo" style="color:var(--red)">$0</strong>
+    </p>
+    <div class="form-group">
+      <label class="form-label">Tipo de pago</label>
+      <select class="form-input" id="tipoPagoTC">
+        <option value="sin_intereses">Pago para no generar intereses</option>
+        <option value="total">Liquidar total</option>
+        <option value="minimo">Pago mínimo</option>
+        <option value="personalizado">Otro monto</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monto a pagar ($)</label>
+      <input class="form-input" id="montoPagoTC" type="number" placeholder="0.00" inputmode="decimal">
+    </div>
+    <button class="btn-primary" onclick="confirmarPagoTC()">💸 Registrar Pago</button>
+    <button class="btn-secondary" onclick="document.getElementById('modalPagoTC').classList.remove('open')">Cancelar</button>
+  </div>
+</div>
+
 <!-- MODAL CERRAR MES -->
 <div class="modal-overlay" id="modalCerrarMes">
   <div class="modal">
@@ -493,6 +532,33 @@ function getLiquidezReal() {
   const totalPagado = pagosHechos.reduce((a,p) => a + p.monto, 0);
   const totalFijosP = getData('fijos_pagados', []).reduce((a,v) => a + v, 0);
   return (CONFIG.saldoMP + CONFIG.saldoHey) - totalPagado - totalFijosP;
+}
+
+// Saldos iniciales de tarjetas de crédito
+const TARJETAS = [
+  { id:'hey',    nombre:'💳 Hey Banco TC',       saldoInicial:5109.80,  limite:14433.78, medio:'💳 Crédito Hey'        },
+  { id:'bbva',   nombre:'💳 BBVA TC',             saldoInicial:7666.82,  limite:52500.00, medio:'💳 Crédito BBVA'       },
+  { id:'mp_tc',  nombre:'💳 MP Tarjeta crédito',  saldoInicial:2948.00,  limite:18000.00, medio:'💳 MP Tarjeta crédito' },
+  { id:'banorte',nombre:'🏦 Banorte',             saldoInicial:1334.00,  limite:16500.00, medio:'💳 Crédito Banorte'    },
+];
+
+function getSaldoTarjeta(tarjetaId) {
+  const t = TARJETAS.find(x => x.id === tarjetaId);
+  if(!t) return 0;
+  // Suma gastos registrados con esta tarjeta
+  const gastosTC = gastos
+    .filter(g => g.medio === t.medio)
+    .reduce((a,g) => a + Number(g.monto), 0);
+  // Resta pagos realizados
+  const pagosTC = getData('pagos_tc_' + tarjetaId, [])
+    .reduce((a,p) => a + Number(p.monto), 0);
+  return t.saldoInicial + gastosTC - pagosTC;
+}
+
+function registrarPagoTC(tarjetaId, monto, tipo) {
+  const pagos = getData('pagos_tc_' + tarjetaId, []);
+  pagos.push({ monto, tipo, fecha: new Date().toISOString().split('T')[0], id: Date.now() });
+  setData('pagos_tc_' + tarjetaId, pagos);
 }
 
 // Pagos de tarjetas/créditos — salen de tus cuentas MP/Hey ANTES de la nómina
@@ -577,11 +643,12 @@ function showScreen(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  const idx = {dashboard:0, gastos:1, pagos:2, historial:3}[name];
+  const idx = {dashboard:0, gastos:1, tarjetas:2, pagos:3, historial:4}[name];
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.querySelectorAll('.nav-item')[idx].classList.add('active');
   if(name === 'dashboard') renderDashboard();
   if(name === 'gastos')    renderGastos();
+  if(name === 'tarjetas')  renderTarjetas();
   if(name === 'pagos')     renderPagos();
   if(name === 'historial') renderHistorial();
 }
@@ -1048,12 +1115,101 @@ async function activarNotificaciones() {
 }
 
 // ══════════════════════════════════════════
+// TARJETAS
+// ══════════════════════════════════════════
+let currentTC = null;
+
+function renderTarjetas() {
+  const el = document.getElementById('tarjetasList');
+  if(!el) return;
+
+  el.innerHTML = TARJETAS.map(t => {
+    const saldo = getSaldoTarjeta(t.id);
+    const pct   = Math.min((saldo / t.limite) * 100, 100);
+    const color = pct > 70 ? 'var(--red)' : pct > 40 ? 'var(--orange)' : 'var(--green)';
+    const pagosHechos = getData('pagos_tc_' + t.id, []);
+    const ultimoPago  = pagosHechos.length
+      ? pagosHechos[pagosHechos.length-1]
+      : null;
+
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:15px;font-weight:700">${t.nombre}</span>
+        <span style="font-size:11px;color:var(--text3)">Límite ${fmt(t.limite)}</span>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--text3)">Saldo actual</span>
+          <span style="font-size:20px;font-weight:700;font-family:var(--mono);color:${color}">${fmt(saldo)}</span>
+        </div>
+        <div style="height:6px;background:var(--surface3);border-radius:3px">
+          <div style="height:100%;width:${pct.toFixed(1)}%;background:${color};border-radius:3px;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <span style="font-size:10px;color:var(--text3)">Saldo inicial: ${fmt(t.saldoInicial)}</span>
+          <span style="font-size:10px;color:var(--text3)">${pct.toFixed(0)}% usado</span>
+        </div>
+      </div>
+      ${pagosHechos.length ? `
+      <div style="background:var(--green-dim);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--green)">
+        ✅ Último pago: ${fmt(ultimoPago.monto)} — ${ultimoPago.tipo.replace('_',' ')} (${ultimoPago.fecha})
+      </div>` : ''}
+      <button onclick="abrirPagoTC('${t.id}')"
+        style="width:100%;padding:12px;background:var(--blue-dim);border:1px solid var(--blue);
+               border-radius:10px;color:var(--blue);font-weight:700;font-size:14px;cursor:pointer">
+        💸 Registrar Pago
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function abrirPagoTC(tarjetaId) {
+  currentTC = TARJETAS.find(t => t.id === tarjetaId);
+  if(!currentTC) return;
+  const saldo = getSaldoTarjeta(tarjetaId);
+  document.getElementById('modalPagoTCTitle').textContent = '💳 Pagar ' + currentTC.nombre;
+  document.getElementById('modalPagoTCSaldo').textContent = fmt(saldo);
+  document.getElementById('montoPagoTC').value = saldo.toFixed(2);
+  document.getElementById('tipoPagoTC').value = 'sin_intereses';
+  document.getElementById('modalPagoTC').classList.add('open');
+}
+
+// Auto-fill monto según tipo
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('tipoPagoTC');
+  if(sel) sel.addEventListener('change', function() {
+    if(!currentTC) return;
+    const saldo = getSaldoTarjeta(currentTC.id);
+    const input = document.getElementById('montoPagoTC');
+    if(this.value === 'total') input.value = saldo.toFixed(2);
+    else if(this.value === 'minimo') input.value = (saldo * 0.05).toFixed(2);
+    else if(this.value === 'sin_intereses') input.value = saldo.toFixed(2);
+    else input.value = '';
+  });
+});
+
+function confirmarPagoTC() {
+  if(!currentTC) return;
+  const monto = parseFloat(document.getElementById('montoPagoTC').value);
+  const tipo  = document.getElementById('tipoPagoTC').value;
+  if(!monto || monto <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+  registrarPagoTC(currentTC.id, monto, tipo);
+  document.getElementById('modalPagoTC').classList.remove('open');
+  showToast('✅ Pago registrado — ' + fmt(monto) + ' en ' + currentTC.nombre);
+  renderTarjetas();
+  renderDashboard();
+}
+
+// ══════════════════════════════════════════
 // CERRAR MODAL AL TOCAR OVERLAY
 // ══════════════════════════════════════════
 document.getElementById('modalGasto').addEventListener('click', function(e){
   if(e.target===this) closeModal();
 });
 document.getElementById('modalCerrarMes').addEventListener('click', function(e){
+  if(e.target===this) this.classList.remove('open');
+});
+document.getElementById('modalPagoTC').addEventListener('click', function(e){
   if(e.target===this) this.classList.remove('open');
 });
 
@@ -1063,6 +1219,7 @@ document.getElementById('modalCerrarMes').addEventListener('click', function(e){
 document.addEventListener('DOMContentLoaded', () => {
   renderDashboard();
   renderPagos();
+  renderTarjetas();
   // Mostrar estado de notificaciones
   if(typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     const btn = document.getElementById('btnNotif');
