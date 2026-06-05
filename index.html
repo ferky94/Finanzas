@@ -591,7 +591,12 @@ function getLiquidezReal() {
   const pagosHechos = PAGOS.filter((_,i) => (getData('pagos_estado',{})[i] === 'paid'));
   const totalPagado = pagosHechos.reduce((a,p) => a + p.monto, 0);
   const totalFijosP = getData('fijos_pagados', []).reduce((a,v) => a + v, 0);
-  return (CONFIG.saldoMP + CONFIG.saldoHey) - totalPagado - totalFijosP;
+  // También descontar gastos variables pagados con débito (no con crédito)
+  const mediosDebito = ['💳 Débito MP', '💳 Débito Hey', '💵 Efectivo'];
+  const gastosDebito = gastos
+    .filter(g => mediosDebito.includes(g.medio))
+    .reduce((a,g) => a + Number(g.monto), 0);
+  return (CONFIG.saldoMP + CONFIG.saldoHey) - totalPagado - totalFijosP - gastosDebito;
 }
 
 // Saldos iniciales de tarjetas de crédito
@@ -1282,7 +1287,7 @@ function renderTarjetas() {
       </div>
       <div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-          <span style="font-size:13px;color:var(--text3)">Saldo actual</span>
+          <span style="font-size:13px;color:var(--text3)">Saldo usado</span>
           <span style="font-size:20px;font-weight:700;font-family:var(--mono);color:${color}">${fmt(saldo)}</span>
         </div>
         <div style="height:6px;background:var(--surface3);border-radius:3px">
