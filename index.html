@@ -949,9 +949,18 @@ function renderDashboard() {
   document.getElementById('kpiFijos').textContent       = fmtShort(CONFIG.gastosFijos);
   document.getElementById('kpiCompromisos').textContent = fmtShort(CONFIG.compromisos);
 
-  // Pagos pendientes
+  // Pagos pendientes — tarjetas fijas + mensualidades MSI/MCI del mes
   const pagosEstad = getData('pagos_estado', {});
-  const pendTotal  = PAGOS.reduce((a,p,i) => a + (pagosEstad[i] !== 'paid' ? p.monto : 0), 0);
+  const pendFijos  = PAGOS.reduce((a,p,i) => a + (pagosEstad[i] !== 'paid' ? p.monto : 0), 0);
+  // Sumar mensualidades de compras MSI/MCI registradas
+  const gastosActuales = getData('gastos_ferky', []);
+  const pendMSI = gastosActuales
+    .filter(g => g.msiMeses > 0)
+    .reduce((a,g) => a + Number(g.msiMensualidad), 0);
+  const pendMCI = gastosActuales
+    .filter(g => g.mciMeses > 0)
+    .reduce((a,g) => a + Number(g.mciMensualidad), 0);
+  const pendTotal = pendFijos + pendMSI + pendMCI;
   if(document.getElementById('kpiPendientes'))
     document.getElementById('kpiPendientes').textContent = fmt(pendTotal);
 
@@ -1241,13 +1250,26 @@ function renderPagos() {
   const total = PAGOS.reduce((a,p)=>a+p.monto,0);
   const pagado = PAGOS.reduce((a,p,i)=>a+(pagosEst[i]==='paid'?p.monto:0),0);
   const totalFijos = FIJOS_NOMINA.reduce((a,f)=>a+f.monto,0);
-  document.getElementById('totalPagar').textContent     = fmt(total);
+  // MSI/MCI del mes
+  const gastosActuales = getData('gastos_ferky', []);
+  const totalMSImes = gastosActuales.filter(g=>g.msiMeses>0).reduce((a,g)=>a+Number(g.msiMensualidad),0);
+  const totalMCImes = gastosActuales.filter(g=>g.mciMeses>0).reduce((a,g)=>a+Number(g.mciMensualidad),0);
+  const extraMeses  = totalMSImes + totalMCImes;
+  document.getElementById('totalPagar').textContent     = fmt(total + extraMeses);
   document.getElementById('totalPagado').textContent    = fmt(pagado);
-  document.getElementById('totalPendiente').textContent = fmt(total-pagado);
+  document.getElementById('totalPendiente').textContent = fmt(total - pagado + extraMeses);
   if(document.getElementById('totalFijosNomina'))
     document.getElementById('totalFijosNomina').textContent = fmt(totalFijos);
   if(document.getElementById('totalMes'))
-    document.getElementById('totalMes').textContent = fmt(total + totalFijos);
+    document.getElementById('totalMes').textContent = fmt(total + totalFijos + extraMeses);
+  // Mostrar desglose MSI/MCI si hay
+  const desgloseMSI = document.getElementById('desgloseMSI');
+  if(desgloseMSI) {
+    desgloseMSI.style.display = extraMeses > 0 ? 'block' : 'none';
+    desgloseMSI.innerHTML = extraMeses > 0
+      ? `<div class="row"><span class="row-label" style="color:var(--blue);font-size:12px">📅 MSI/MCI del mes</span><span class="row-value blue">${fmt(extraMeses)}</span></div>`
+      : '';
+  }
 }
 
 function togglePago(idx) {
