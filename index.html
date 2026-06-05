@@ -290,10 +290,19 @@ select.form-input{-webkit-appearance:none;appearance:none;}
         <div id="ingresosList"></div>
       </div>
 
-      <!-- Gastos por categoría -->
+      <!-- Gastos por categoría con dona -->
       <div class="card">
         <div class="section-header">
           <span class="card-title" style="margin-bottom:0">🛍️ Por Categoría</span>
+          <span id="totalGastadoLabel" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <!-- Dona SVG -->
+        <div id="donaWrap" style="display:none;position:relative;width:160px;height:160px;margin:0 auto 16px">
+          <svg id="donaSVG" width="160" height="160" viewBox="0 0 160 160"></svg>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+            <div id="donaTotal" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--text)"></div>
+            <div style="font-size:10px;color:var(--text3)">total</div>
+          </div>
         </div>
         <div id="catList"><div class="empty-state"><div class="emoji">📊</div><p>Sin gastos registrados</p></div></div>
       </div>
@@ -313,6 +322,20 @@ select.form-input{-webkit-appearance:none;appearance:none;}
         <span class="section-title">Registro del Mes</span>
         <button class="section-action" onclick="clearConfirm()">Limpiar</button>
       </div>
+      <!-- Buscador -->
+      <div style="position:relative;margin-bottom:12px">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🔍</span>
+        <input id="buscadorGastos" type="text" placeholder="Buscar gasto..." 
+               oninput="filtrarGastos()"
+               style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px 12px 42px;font-size:15px;color:var(--text);font-family:var(--font);outline:none;">
+      </div>
+      <!-- Mini calendario -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:10px">📅 ESTE MES</div>
+        <div id="miniCalendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center"></div>
+        <div id="calDayDetail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"></div>
+      </div>
+
       <div class="card" style="padding:0 16px;">
         <div id="gastosList"><div class="empty-state" style="padding:32px"><div class="emoji">🧾</div><p>Toca + para registrar tu primer gasto</p></div></div>
       </div>
@@ -882,7 +905,7 @@ function showScreen(name) {
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.querySelectorAll('.nav-item')[idx].classList.add('active');
   if(name === 'dashboard') renderDashboard();
-  if(name === 'gastos')    renderGastos();
+  if(name === 'gastos')  { renderGastos(); renderCalendario(); }
   if(name === 'tarjetas')  renderTarjetas();
   if(name === 'pagos')     renderPagos();
   if(name === 'historial') renderHistorial();
@@ -997,13 +1020,46 @@ function renderDashboard() {
     return;
   }
   const maxVal = sorted[0][1];
+  const totalGastado = sorted.reduce((a,[,v])=>a+v,0);
+  document.getElementById('totalGastadoLabel').textContent = fmt(totalGastado) + ' gastados';
+
+  // Draw donut chart
+  const donaWrap = document.getElementById('donaWrap');
+  const donaSVG  = document.getElementById('donaSVG');
+  const donaTotal= document.getElementById('donaTotal');
+  if(sorted.length && donaWrap && donaSVG) {
+    donaWrap.style.display = 'block';
+    donaTotal.textContent = fmtShort(totalGastado);
+    const cx=80, cy=80, r=60, strokeW=22;
+    const circ = 2*Math.PI*r;
+    let offset = 0;
+    donaSVG.innerHTML = sorted.map(([cat,val])=>{
+      const color = CAT_COLORS[cat]||'#94a3b8';
+      const pct   = val/totalGastado;
+      const dash  = pct*circ;
+      const gap   = circ-dash;
+      const seg   = `<circle cx="${cx}" cy="${cy}" r="${r}"
+        fill="none" stroke="${color}" stroke-width="${strokeW}"
+        stroke-dasharray="${dash} ${gap}"
+        stroke-dashoffset="${-offset}"
+        transform="rotate(-90 ${cx} ${cy})"
+        style="transition:stroke-dasharray .5s"/>`;
+      offset += dash;
+      return seg;
+    }).join('') + `<circle cx="${cx}" cy="${cy}" r="${r-strokeW/2-2}" fill="var(--surface)"/>`;
+  }
+
   el.innerHTML = sorted.map(([cat, total]) => {
     const color = CAT_COLORS[cat] || '#94a3b8';
     const pctBar = Math.round((total/maxVal)*100);
+    const pctTotal= Math.round((total/totalGastado)*100);
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
         <span style="font-size:13px;color:var(--text2)">${cat}</span>
-        <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:${color}">${fmt(total)}</span>
+        <div style="text-align:right">
+          <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:${color}">${fmt(total)}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:4px">${pctTotal}%</span>
+        </div>
       </div>
       <div style="height:4px;background:var(--surface3);border-radius:2px">
         <div style="height:100%;width:${pctBar}%;background:${color};border-radius:2px;transition:width .5s"></div>
@@ -1015,6 +1071,74 @@ function renderDashboard() {
 // ══════════════════════════════════════════
 // GASTOS
 // ══════════════════════════════════════════
+// ── MINI CALENDARIO ────────────────────────
+function renderCalendario() {
+  const cal = document.getElementById('miniCalendar');
+  if(!cal) return;
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+
+  // Group gastos by day
+  const gastosPorDia = {};
+  gastos.forEach(g => {
+    const d = new Date(g.fecha+'T12:00:00');
+    if(d.getMonth()===month && d.getFullYear()===year) {
+      const day = d.getDate();
+      if(!gastosPorDia[day]) gastosPorDia[day]=0;
+      gastosPorDia[day]+=Number(g.monto);
+    }
+  });
+
+  const dias = ['D','L','M','M','J','V','S'];
+  let html = dias.map(d=>`<div style="font-size:10px;color:var(--text3);font-weight:700;padding:2px">${d}</div>`).join('');
+
+  // Empty cells before first day
+  for(let i=0;i<firstDay;i++) html+=`<div></div>`;
+
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday = d===today;
+    const hasGasto = gastosPorDia[d]>0;
+    const bg = isToday ? 'var(--green)' : hasGasto ? 'var(--surface3)' : 'transparent';
+    const color = isToday ? '#0a0f1e' : hasGasto ? 'var(--orange)' : 'var(--text3)';
+    const dot = hasGasto && !isToday ? `<div style="width:4px;height:4px;background:var(--orange);border-radius:50%;margin:1px auto 0"></div>` : '';
+    html+=`<div onclick="verDia(${d})" style="cursor:pointer;padding:4px 2px;border-radius:6px;background:${bg}">
+      <div style="font-size:12px;font-weight:${isToday||hasGasto?'700':'400'};color:${color}">${d}</div>
+      ${dot}
+    </div>`;
+  }
+  cal.innerHTML = html;
+}
+
+function verDia(dia) {
+  const now = new Date();
+  const gastosDelDia = gastos.filter(g => {
+    const d = new Date(g.fecha+'T12:00:00');
+    return d.getDate()===dia && d.getMonth()===now.getMonth();
+  });
+  const detail = document.getElementById('calDayDetail');
+  if(!detail) return;
+  if(!gastosDelDia.length) {
+    detail.style.display='none'; return;
+  }
+  const total = gastosDelDia.reduce((a,g)=>a+Number(g.monto),0);
+  detail.style.display='block';
+  detail.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">
+    Día ${dia} — ${fmt(total)} total</div>`
+    + gastosDelDia.map(g=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--text3)">
+      <span>${(g.categoria||'❓').split(' ')[0]} ${g.descripcion}</span>
+      <span style="color:var(--red);font-weight:600">${fmt(g.monto)}</span>
+    </div>`).join('');
+}
+
+function filtrarGastos() {
+  const q = (document.getElementById('buscadorGastos').value || '').toLowerCase();
+  renderGastosList(q);
+}
+
 function renderGastos() {
   gastos = getData('gastos_ferky', []);
   const badge = document.getElementById('gastosBadge');
@@ -1028,7 +1152,29 @@ function renderGastos() {
     el.innerHTML = '<div class="empty-state" style="padding:32px"><div class="emoji">🧾</div><p>Toca + para registrar tu primer gasto</p></div>';
     return;
   }
-  const sorted = [...gastos].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  renderGastosList('');
+}
+
+function renderGastosList(query) {
+  const el = document.getElementById('gastosList');
+  if(!el) return;
+  gastos = getData('gastos_ferky', []);
+  const filtered = query
+    ? gastos.filter(g =>
+        (g.descripcion||'').toLowerCase().includes(query) ||
+        (g.categoria||'').toLowerCase().includes(query) ||
+        (g.medio||'').toLowerCase().includes(query) ||
+        String(g.monto).includes(query))
+    : gastos;
+
+  if(!filtered.length) {
+    el.innerHTML = query
+      ? `<div class="empty-state" style="padding:32px"><div class="emoji">🔍</div><p>Sin resultados para "${query}"</p></div>`
+      : '<div class="empty-state" style="padding:32px"><div class="emoji">🧾</div><p>Toca + para registrar tu primer gasto</p></div>';
+    return;
+  }
+
+  const sorted = [...filtered].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
   el.innerHTML = sorted.map((g,i) => {
     const color = CAT_COLORS[g.categoria] || '#94a3b8';
     const emoji = (g.categoria||'❓').split(' ')[0];
