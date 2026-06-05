@@ -946,8 +946,6 @@ function renderDashboard() {
     if(kpiIngLabel) kpiIngLabel.textContent = 'Ingresos esperados';
   }
   document.getElementById('kpiVariables').textContent   = fmtShort(vars);
-  document.getElementById('kpiFijos').textContent       = fmtShort(CONFIG.gastosFijos);
-  document.getElementById('kpiCompromisos').textContent = fmtShort(CONFIG.compromisos);
 
   // Pagos pendientes — tarjetas fijas + mensualidades MSI/MCI del mes
   const pagosEstad = getData('pagos_estado', {});
