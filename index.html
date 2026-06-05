@@ -1388,9 +1388,8 @@ function renderTarjetas() {
         <div style="height:6px;background:var(--surface3);border-radius:3px">
           <div style="height:100%;width:${pct.toFixed(1)}%;background:${color};border-radius:3px;transition:width .5s"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:4px">
-          <span style="font-size:10px;color:var(--text3)">Saldo inicial: ${fmt(t.saldoInicial)}</span>
-          <span style="font-size:10px;color:var(--text3)">${pct.toFixed(0)}% usado</span>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px">
+          <span style="font-size:10px;color:var(--text3)">${pct.toFixed(0)}% del límite usado</span>
         </div>
       </div>
       ${pagosHechos.length ? `
