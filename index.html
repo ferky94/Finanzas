@@ -939,18 +939,52 @@ function renderDashboard() {
   }
   document.getElementById('kpiVariables').textContent   = fmtShort(vars);
 
-  // Pagos pendientes — tarjetas fijas + mensualidades MSI/MCI del mes
+  // Pagos pendientes — tarjetas fijas + MSI/MCI + gastos de contado con TDC este ciclo
   const pagosEstad = getData('pagos_estado', {});
   const pendFijos  = PAGOS.reduce((a,p,i) => a + (pagosEstad[i] !== 'paid' ? p.monto : 0), 0);
-  // Sumar mensualidades de compras MSI/MCI registradas
+
+  // Días de corte por tarjeta
+  const CORTES = {
+    '💳 Crédito Hey':        25,
+    '💳 Crédito BBVA':        7,
+    '💳 MP Tarjeta crédito':  7,
+    '💳 Crédito Banorte':    11,
+  };
+
+  const hoy = new Date();
+  const diaHoy = hoy.getDate();
   const gastosActuales = getData('gastos_ferky', []);
+
+  // Gastos con TDC — solo los del ciclo actual (antes del corte de cada tarjeta)
+  const gastosContadoTDC = gastosActuales
+    .filter(g => {
+      if(!CORTES[g.medio]) return false;  // no es TDC
+      if(g.msiMeses > 0 || g.mciMeses > 0) return false; // MSI/MCI se manejan aparte
+      const fechaGasto = new Date(g.fecha + 'T12:00:00');
+      const diaCorte = CORTES[g.medio];
+      // Si hoy es antes del corte: gastos de este mes calendario cuentan
+      // Si hoy es después del corte: solo gastos posteriores al corte cuentan
+      if(diaHoy < diaCorte) {
+        // Estamos antes del corte — gastos desde inicio del mes hasta hoy
+        return fechaGasto.getMonth() === hoy.getMonth() &&
+               fechaGasto.getFullYear() === hoy.getFullYear();
+      } else {
+        // Estamos después del corte — gastos desde el día de corte en adelante
+        const inicioNuevoCiclo = new Date(hoy.getFullYear(), hoy.getMonth(), diaCorte);
+        return fechaGasto >= inicioNuevoCiclo;
+      }
+    })
+    .reduce((a,g) => a + Number(g.monto), 0);
+
+  // MSI/MCI mensualidades
   const pendMSI = gastosActuales
     .filter(g => g.msiMeses > 0)
     .reduce((a,g) => a + Number(g.msiMensualidad), 0);
   const pendMCI = gastosActuales
     .filter(g => g.mciMeses > 0)
     .reduce((a,g) => a + Number(g.mciMensualidad), 0);
-  const pendTotal = pendFijos + pendMSI + pendMCI;
+
+  const pendTotal = pendFijos + pendMSI + pendMCI + gastosContadoTDC;
   if(document.getElementById('kpiPendientes'))
     document.getElementById('kpiPendientes').textContent = fmt(pendTotal);
 
