@@ -438,12 +438,43 @@ select.form-input{-webkit-appearance:none;appearance:none;}
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">¿Es a Meses Sin Intereses? (deja en 0 si no)</label>
-      <input class="form-input" id="inputMSI" type="number" placeholder="0" 
-             inputmode="numeric" min="0" max="48" value="0" oninput="toggleMSI()">
+      <label class="form-label">Tipo de compra</label>
+      <select class="form-input" id="inputTipoCompra" onchange="toggleTipoCompra()">
+        <option value="normal">Pago normal (de contado)</option>
+        <option value="msi">Meses Sin Intereses (MSI)</option>
+        <option value="mci">Meses Con Intereses (MCI)</option>
+      </select>
     </div>
-    <div id="msiInfo" style="display:none;background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--blue)">
-      📅 Mensualidad: <strong id="msiMensualidad">$0</strong> por mes · Total: <strong id="msiTotal">$0</strong>
+
+    <!-- MSI -->
+    <div id="bloquesMSI" style="display:none">
+      <div class="form-group">
+        <label class="form-label">¿A cuántos meses? (MSI)</label>
+        <input class="form-input" id="inputMSI" type="number" placeholder="Ej. 4" 
+               inputmode="numeric" min="1" max="48" value="" oninput="calcularMSI()">
+      </div>
+      <div id="msiInfo" style="display:none;background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:12px;margin-bottom:8px;font-size:13px;color:var(--blue)">
+        📅 Mensualidad: <strong id="msiMensualidad">$0</strong>/mes · Total: <strong id="msiTotal">$0</strong>
+      </div>
+    </div>
+
+    <!-- MCI -->
+    <div id="bloquesMCI" style="display:none">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">¿A cuántos meses? (MCI)</label>
+          <input class="form-input" id="inputMCIMeses" type="number" placeholder="Ej. 12"
+                 inputmode="numeric" min="1" max="48" oninput="calcularMCI()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pago mensual ($)</label>
+          <input class="form-input" id="inputMCIPago" type="number" placeholder="Ej. 1200"
+                 inputmode="decimal" oninput="calcularMCI()">
+        </div>
+      </div>
+      <div id="mciInfo" style="display:none;background:var(--orange-dim);border:1px solid var(--orange);border-radius:10px;padding:12px;margin-bottom:8px;font-size:13px;color:var(--orange)">
+        📅 Mensualidad: <strong id="mciMensualidad">$0</strong>/mes · Total con intereses: <strong id="mciTotal">$0</strong> · Intereses: <strong id="mciIntereses">$0</strong>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Notas (opcional)</label>
@@ -786,11 +817,12 @@ function renderGastos() {
       <div class="expense-icon" style="background:${color}22">${emoji}</div>
       <div class="expense-info">
         <div class="expense-name">${g.descripcion}</div>
-        <div class="expense-cat">${g.categoria||'Sin categoría'} · ${g.medio||''}${g.msiMeses>0?' · <span style="color:var(--blue);font-weight:600">'+g.msiMeses+' MSI</span>':''}</div>
+        <div class="expense-cat">${g.categoria||'Sin categoría'} · ${g.medio||''}${g.msiMeses>0?' · <span style="color:var(--blue);font-weight:600">'+g.msiMeses+' MSI</span>':''}${g.mciMeses>0?' · <span style="color:var(--orange);font-weight:600">'+g.mciMeses+' MCI</span>':''}</div>
       </div>
       <div class="expense-right">
         <div class="expense-amount">${fmt(g.monto)}</div>
         ${g.msiMeses>0?`<div style="font-size:10px;color:var(--blue);text-align:right">${fmt(g.msiMensualidad)}/mes</div>`:''}
+        ${g.mciMeses>0?`<div style="font-size:10px;color:var(--orange);text-align:right">${fmt(g.mciMensualidad)}/mes</div>`:''}
         <div class="expense-date">${dateStr}</div>
       </div>
     </div>`;
@@ -911,33 +943,65 @@ function openModal() {
   document.getElementById('inputCat').value = '';
   document.getElementById('inputMedio').value = '';
   document.getElementById('inputNota').value = '';
-  document.getElementById('inputMSI').value = '0';
+  document.getElementById('inputTipoCompra').value = 'normal';
+  document.getElementById('bloquesMSI').style.display = 'none';
+  document.getElementById('bloquesMCI').style.display = 'none';
   document.getElementById('msiInfo').style.display = 'none';
+  document.getElementById('mciInfo').style.display = 'none';
+  if(document.getElementById('inputMSI')) document.getElementById('inputMSI').value = '';
+  if(document.getElementById('inputMCIMeses')) document.getElementById('inputMCIMeses').value = '';
+  if(document.getElementById('inputMCIPago')) document.getElementById('inputMCIPago').value = '';
   document.getElementById('modalGasto').classList.add('open');
   setTimeout(() => document.getElementById('inputDesc').focus(), 300);
 }
 function closeModal() {
   document.getElementById('modalGasto').classList.remove('open');
 }
-function toggleMSI() {
+function toggleTipoCompra() {
+  const tipo = document.getElementById('inputTipoCompra').value;
+  document.getElementById('bloquesMSI').style.display = tipo === 'msi' ? 'block' : 'none';
+  document.getElementById('bloquesMCI').style.display = tipo === 'mci' ? 'block' : 'none';
+  document.getElementById('msiInfo').style.display = 'none';
+  document.getElementById('mciInfo').style.display = 'none';
+}
+
+function calcularMSI() {
   const meses = parseInt(document.getElementById('inputMSI').value) || 0;
   const monto = parseFloat(document.getElementById('inputMonto').value) || 0;
   const info  = document.getElementById('msiInfo');
-  if(meses > 0) {
+  if(meses > 0 && monto > 0) {
     info.style.display = 'block';
-    const mensualidad = monto / meses;
-    document.getElementById('msiMensualidad').textContent = fmt(mensualidad);
+    document.getElementById('msiMensualidad').textContent = fmt(monto / meses);
     document.getElementById('msiTotal').textContent = fmt(monto);
   } else {
     info.style.display = 'none';
   }
 }
 
-// Recalcular MSI cuando cambia el monto
+function calcularMCI() {
+  const meses = parseInt(document.getElementById('inputMCIMeses').value) || 0;
+  const pago  = parseFloat(document.getElementById('inputMCIPago').value) || 0;
+  const monto = parseFloat(document.getElementById('inputMonto').value) || 0;
+  const info  = document.getElementById('mciInfo');
+  if(meses > 0 && pago > 0) {
+    info.style.display = 'block';
+    const totalMCI = pago * meses;
+    const intereses = monto > 0 ? totalMCI - monto : 0;
+    document.getElementById('mciMensualidad').textContent = fmt(pago);
+    document.getElementById('mciTotal').textContent = fmt(totalMCI);
+    document.getElementById('mciIntereses').textContent = fmt(intereses > 0 ? intereses : 0);
+  } else {
+    info.style.display = 'none';
+  }
+}
+
+// Recalcular cuando cambia el monto
 document.addEventListener('DOMContentLoaded', () => {
   const montoInput = document.getElementById('inputMonto');
   if(montoInput) montoInput.addEventListener('input', () => {
-    if(parseInt(document.getElementById('inputMSI').value) > 0) toggleMSI();
+    const tipo = document.getElementById('inputTipoCompra').value;
+    if(tipo === 'msi') calcularMSI();
+    if(tipo === 'mci') calcularMCI();
   });
 });
 
@@ -1189,11 +1253,14 @@ function renderTarjetas() {
       </div>` : ''}
       ${(() => {
         const msiActivos = gastos.filter(g => g.medio === t.medio && g.msiMeses > 0);
-        if(!msiActivos.length) return '';
-        const totalMensualidades = msiActivos.reduce((a,g) => a + g.msiMensualidad, 0);
-        return `<div style="background:var(--blue-dim);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue)">
-          📅 MSI activos: ${msiActivos.length} compra(s) · <strong>${fmt(totalMensualidades)}/mes</strong>
-        </div>`;
+        const mciActivos = gastos.filter(g => g.medio === t.medio && g.mciMeses > 0);
+        const totalMSI = msiActivos.reduce((a,g) => a + g.msiMensualidad, 0);
+        const totalMCI = mciActivos.reduce((a,g) => a + g.mciMensualidad, 0);
+        if(!msiActivos.length && !mciActivos.length) return '';
+        return (msiActivos.length ? `<div style="background:var(--blue-dim);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--blue)">
+          📅 MSI: ${msiActivos.length} compra(s) · <strong>${fmt(totalMSI)}/mes</strong></div>` : '')
+               + (mciActivos.length ? `<div style="background:var(--orange-dim);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--orange)">
+          📅 MCI: ${mciActivos.length} compra(s) · <strong>${fmt(totalMCI)}/mes</strong></div>` : '');
       })()}
       <button onclick="abrirPagoTC('${t.id}')"
         style="width:100%;padding:12px;background:var(--blue-dim);border:1px solid var(--blue);
