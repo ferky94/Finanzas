@@ -442,6 +442,7 @@ select.form-input{-webkit-appearance:none;appearance:none;}
         <option>💳 Crédito BBVA</option>
         <option>💳 MP Tarjeta crédito</option>
         <option>💳 Crédito Banorte</option>
+        <option>💸 MP Crédito sin tarjeta</option>
         <option>🛒 Si Vale Despensa</option>
         <option>🍽️ Si Vale Restaurante</option>
         <option>💵 Efectivo</option>
@@ -945,10 +946,11 @@ function renderDashboard() {
 
   // Días de corte por tarjeta
   const CORTES = {
-    '💳 Crédito Hey':        25,
-    '💳 Crédito BBVA':        7,
-    '💳 MP Tarjeta crédito':  7,
-    '💳 Crédito Banorte':    11,
+    '💳 Crédito Hey':           25,
+    '💳 Crédito BBVA':           7,
+    '💳 MP Tarjeta crédito':     7,
+    '💳 Crédito Banorte':       11,
+    '💸 MP Crédito sin tarjeta': 0,  // Sin corte — suma todo el mes
   };
 
   const hoy = new Date();
@@ -962,14 +964,16 @@ function renderDashboard() {
       if(g.msiMeses > 0 || g.mciMeses > 0) return false; // MSI/MCI se manejan aparte
       const fechaGasto = new Date(g.fecha + 'T12:00:00');
       const diaCorte = CORTES[g.medio];
-      // Si hoy es antes del corte: gastos de este mes calendario cuentan
-      // Si hoy es después del corte: solo gastos posteriores al corte cuentan
+      // Sin corte (día 0) — suma todo lo del mes calendario
+      if(diaCorte === 0) {
+        return fechaGasto.getMonth() === hoy.getMonth() &&
+               fechaGasto.getFullYear() === hoy.getFullYear();
+      }
+      // Con corte — lógica normal
       if(diaHoy < diaCorte) {
-        // Estamos antes del corte — gastos desde inicio del mes hasta hoy
         return fechaGasto.getMonth() === hoy.getMonth() &&
                fechaGasto.getFullYear() === hoy.getFullYear();
       } else {
-        // Estamos después del corte — gastos desde el día de corte en adelante
         const inicioNuevoCiclo = new Date(hoy.getFullYear(), hoy.getMonth(), diaCorte);
         return fechaGasto >= inicioNuevoCiclo;
       }
