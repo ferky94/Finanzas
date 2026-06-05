@@ -195,6 +195,7 @@ select.form-input{-webkit-appearance:none;appearance:none;}
   <div class="header">
     <div class="header-top">
       <span class="header-greeting">Hola, Ferky 👋</span>
+      <span id="syncStatus" style="font-size:11px;color:#94a3b8;opacity:0;transition:opacity .3s">✅</span>
       <span class="header-month" id="currentMonth"></span>
     </div>
     <div class="header-balance">$<span id="headerBalance">0</span></div>
@@ -355,10 +356,12 @@ select.form-input{-webkit-appearance:none;appearance:none;}
         <span class="config-label">🔔 Alertas de saldo</span>
         <button onclick="activarNotificaciones()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;" id="btnNotif">Activar</button>
       </div>
+      <div class="config-item">
+        <span class="config-label">☁️ Sync nube</span>
+        <span id="syncTokenStatus" style="font-size:12px;color:var(--green);font-weight:600">✅ Activo</span>
       </div>
-      <button class="export-btn" onclick="exportarExcel()">📥 Exportar a Excel (.xlsx)</button>
-      <div style="height:8px"></div>
-      <button class="export-btn" style="border-color:var(--purple);color:var(--purple);background:var(--purple-dim)" onclick="exportarCSV()">📋 Exportar a CSV</button>
+      </div>
+      <button class="export-btn" onclick="forzarSync()" style="border-color:var(--green);color:var(--green);background:var(--green-dim)">☁️ Sincronizar datos ahora</button>
     </div>
 
   </div><!-- /content -->
@@ -714,19 +717,138 @@ const CAT_COLORS = {
 };
 
 // ══════════════════════════════════════════
-// STORAGE
+// STORAGE — GitHub + localStorage sync
 // ══════════════════════════════════════════
+const GH_REPO   = 'ferky94/Finanzas';
+const DATA_FILE = 'datos.json';
+const API_URL   = `https://api.github.com/repos/${GH_REPO}/contents/${DATA_FILE}`;
+
+// Token stored only in localStorage — never in code
+function getGHToken() { return localStorage.getItem('gh_token') || ''; }
+function setGHToken(t) { localStorage.setItem('gh_token', t); }
+
+let _dataSHA = null;
+let _dataCache = null;
+let _saveTimer = null;
+let _appReady = false;
+
+// Local read (instant)
 function getData(key, def) {
+  if(_dataCache && _dataCache[key] !== undefined) return _dataCache[key];
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
   catch(e) { return def; }
 }
+
+// Local write + schedule GitHub sync
 function setData(key, val) {
+  if(!_dataCache) _dataCache = {};
+  _dataCache[key] = val;
   try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){}
+  // Debounce: save to GitHub 2s after last change
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveToGitHub, 2000);
 }
 
-let gastos    = getData('gastos_ferky', []);
-let pagosEst  = getData('pagos_estado', {});
-let historial = getData('historial_ferky', []);
+// Save all data to GitHub
+async function saveToGitHub() {
+  if(!_dataCache) return;
+  try {
+    const body = JSON.stringify({
+      message: 'Sync datos ' + new Date().toISOString().slice(0,16),
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(_dataCache)))),
+      ..._dataSHA ? {sha: _dataSHA} : {}
+    });
+    const res = await fetch(API_URL, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${getGHToken()}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github+json'
+      },
+      body
+    });
+    if(res.ok) {
+      const data = await res.json();
+      _dataSHA = data.content.sha;
+      showSyncStatus('✅ Guardado');
+    }
+  } catch(e) {
+    showSyncStatus('⚠️ Sin conexión — datos locales');
+  }
+}
+
+// Load data from GitHub on startup
+async function loadFromGitHub() {
+  if(!getGHToken()) {
+    // Ask user to enter token once
+    const t = prompt('Para guardar tus datos en la nube, pega tu token de GitHub:\n(Lo encontrarás en la app de ajustes que te compartí)');
+    if(t && t.trim()) {
+      setGHToken(t.trim());
+    } else {
+      _appReady = true;
+      _dataCache = {};
+      showSyncStatus('⚠️ Sin token — datos locales');
+      gastos = getData('gastos_ferky', []);
+      renderDashboard(); renderPagos(); renderTarjetas();
+      return;
+    }
+  }
+  showSyncStatus('🔄 Cargando...');
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now(), {
+      headers: {
+        'Authorization': `token ${getGHToken()}`,
+        'Accept': 'application/vnd.github+json'
+      }
+    });
+    if(res.ok) {
+      const file = await res.json();
+      _dataSHA = file.sha;
+      const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+      _dataCache = JSON.parse(decoded);
+      // Sync to localStorage
+      Object.entries(_dataCache).forEach(([k,v]) => {
+        try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
+      });
+      showSyncStatus('✅ Datos cargados');
+    } else if(res.status === 404) {
+      // First time — no data yet
+      _dataCache = {};
+      showSyncStatus('✅ App lista');
+    }
+  } catch(e) {
+    // Offline — use localStorage
+    _dataCache = {};
+    const keys = ['gastos_ferky','ingresos_ferky','historial_ferky','pagos_estado','pagos_tc_hey','pagos_tc_bbva','pagos_tc_mp_tc','pagos_tc_banorte','notif_activas'];
+    keys.forEach(k => {
+      try {
+        const v = localStorage.getItem(k);
+        if(v) _dataCache[k] = JSON.parse(v);
+      } catch(e){}
+    });
+    showSyncStatus('⚠️ Modo offline');
+  }
+  _appReady = true;
+  // Re-render with loaded data
+  gastos = getData('gastos_ferky', []);
+  renderDashboard();
+  renderPagos();
+  renderTarjetas();
+}
+
+function showSyncStatus(msg) {
+  const el = document.getElementById('syncStatus');
+  if(el) {
+    el.textContent = msg;
+    el.style.opacity = '1';
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+  }
+}
+
+let gastos    = [];  // loaded from GitHub on init
+let pagosEst  = {};
+let historial = [];
 
 // ══════════════════════════════════════════
 // HELPERS
@@ -894,6 +1016,7 @@ function renderDashboard() {
 // GASTOS
 // ══════════════════════════════════════════
 function renderGastos() {
+  gastos = getData('gastos_ferky', []);
   const badge = document.getElementById('gastosBadge');
   badge.textContent = gastos.length;
   badge.style.display = gastos.length ? 'inline-flex' : 'none';
@@ -932,6 +1055,7 @@ function renderGastos() {
 // PAGOS
 // ══════════════════════════════════════════
 function renderPagos() {
+  pagosEst = getData('pagos_estado', {});
   const list11 = document.getElementById('pagosList11');
   const list15 = document.getElementById('pagosList15');
 
@@ -1011,6 +1135,7 @@ function togglePago(idx) {
 // HISTORIAL
 // ══════════════════════════════════════════
 function renderHistorial() {
+  historial = getData('historial_ferky', []);
   const el = document.getElementById('historialList');
   if(!historial.length) {
     el.innerHTML = '<div class="empty-state"><div class="emoji">📈</div><p>Al cerrar el mes aparecerá aquí</p></div>';
@@ -1263,6 +1388,12 @@ function clearConfirm() {
 // ══════════════════════════════════════════
 // EXPORTAR CSV
 // ══════════════════════════════════════════
+function forzarSync() {
+  clearTimeout(_saveTimer);
+  saveToGitHub();
+  showToast('☁️ Sincronizando...');
+}
+
 function exportarCSV() {
   if(!gastos.length && !historial.length) { showToast('Sin datos para exportar'); return; }
   let csv = 'Fecha,Descripción,Monto,Categoría,Medio de Pago,Notas\n';
@@ -1504,9 +1635,8 @@ document.getElementById('modalIngreso').addEventListener('click', function(e){
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  renderDashboard();
-  renderPagos();
-  renderTarjetas();
+  // Load from GitHub first, then render
+  loadFromGitHub();
   // Mostrar estado de notificaciones
   if(typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     const btn = document.getElementById('btnNotif');
