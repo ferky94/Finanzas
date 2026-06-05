@@ -438,6 +438,21 @@ select.form-input{-webkit-appearance:none;appearance:none;}
       </select>
     </div>
     <div class="form-group">
+      <label class="form-label">¿Es a Meses Sin Intereses?</label>
+      <select class="form-input" id="inputMSI" onchange="toggleMSI()">
+        <option value="0">No, pago normal</option>
+        <option value="3">Sí — 3 MSI</option>
+        <option value="6">Sí — 6 MSI</option>
+        <option value="9">Sí — 9 MSI</option>
+        <option value="12">Sí — 12 MSI</option>
+        <option value="18">Sí — 18 MSI</option>
+        <option value="24">Sí — 24 MSI</option>
+      </select>
+    </div>
+    <div id="msiInfo" style="display:none;background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--blue)">
+      📅 Mensualidad: <strong id="msiMensualidad">$0</strong> por mes · Total: <strong id="msiTotal">$0</strong>
+    </div>
+    <div class="form-group">
       <label class="form-label">Notas (opcional)</label>
       <input class="form-input" id="inputNota" type="text" placeholder="Ej. Con Juan en el lunch">
     </div>
@@ -545,7 +560,7 @@ const TARJETAS = [
 function getSaldoTarjeta(tarjetaId) {
   const t = TARJETAS.find(x => x.id === tarjetaId);
   if(!t) return 0;
-  // Suma gastos registrados con esta tarjeta
+  // Suma gastos registrados con esta tarjeta (total, incluye MSI completo)
   const gastosTC = gastos
     .filter(g => g.medio === t.medio)
     .reduce((a,g) => a + Number(g.monto), 0);
@@ -778,10 +793,11 @@ function renderGastos() {
       <div class="expense-icon" style="background:${color}22">${emoji}</div>
       <div class="expense-info">
         <div class="expense-name">${g.descripcion}</div>
-        <div class="expense-cat">${g.categoria||'Sin categoría'} · ${g.medio||''}</div>
+        <div class="expense-cat">${g.categoria||'Sin categoría'} · ${g.medio||''}${g.msiMeses>0?' · <span style="color:var(--blue);font-weight:600">'+g.msiMeses+' MSI</span>':''}</div>
       </div>
       <div class="expense-right">
         <div class="expense-amount">${fmt(g.monto)}</div>
+        ${g.msiMeses>0?`<div style="font-size:10px;color:var(--blue);text-align:right">${fmt(g.msiMensualidad)}/mes</div>`:''}
         <div class="expense-date">${dateStr}</div>
       </div>
     </div>`;
@@ -902,12 +918,36 @@ function openModal() {
   document.getElementById('inputCat').value = '';
   document.getElementById('inputMedio').value = '';
   document.getElementById('inputNota').value = '';
+  document.getElementById('inputMSI').value = '0';
+  document.getElementById('msiInfo').style.display = 'none';
   document.getElementById('modalGasto').classList.add('open');
   setTimeout(() => document.getElementById('inputDesc').focus(), 300);
 }
 function closeModal() {
   document.getElementById('modalGasto').classList.remove('open');
 }
+function toggleMSI() {
+  const meses = parseInt(document.getElementById('inputMSI').value);
+  const monto = parseFloat(document.getElementById('inputMonto').value) || 0;
+  const info  = document.getElementById('msiInfo');
+  if(meses > 0) {
+    info.style.display = 'block';
+    const mensualidad = monto / meses;
+    document.getElementById('msiMensualidad').textContent = fmt(mensualidad);
+    document.getElementById('msiTotal').textContent = fmt(monto);
+  } else {
+    info.style.display = 'none';
+  }
+}
+
+// Recalcular MSI cuando cambia el monto
+document.addEventListener('DOMContentLoaded', () => {
+  const montoInput = document.getElementById('inputMonto');
+  if(montoInput) montoInput.addEventListener('input', () => {
+    if(parseInt(document.getElementById('inputMSI').value) > 0) toggleMSI();
+  });
+});
+
 function guardarGasto() {
   const desc  = document.getElementById('inputDesc').value.trim();
   const monto = parseFloat(document.getElementById('inputMonto').value);
@@ -1154,6 +1194,14 @@ function renderTarjetas() {
       <div style="background:var(--green-dim);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--green)">
         ✅ Último pago: ${fmt(ultimoPago.monto)} — ${ultimoPago.tipo.replace('_',' ')} (${ultimoPago.fecha})
       </div>` : ''}
+      ${(() => {
+        const msiActivos = gastos.filter(g => g.medio === t.medio && g.msiMeses > 0);
+        if(!msiActivos.length) return '';
+        const totalMensualidades = msiActivos.reduce((a,g) => a + g.msiMensualidad, 0);
+        return `<div style="background:var(--blue-dim);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue)">
+          📅 MSI activos: ${msiActivos.length} compra(s) · <strong>${fmt(totalMensualidades)}/mes</strong>
+        </div>`;
+      })()}
       <button onclick="abrirPagoTC('${t.id}')"
         style="width:100%;padding:12px;background:var(--blue-dim);border:1px solid var(--blue);
                border-radius:10px;color:var(--blue);font-weight:700;font-size:14px;cursor:pointer">
