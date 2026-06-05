@@ -813,7 +813,8 @@ function renderGastos() {
     const color = CAT_COLORS[g.categoria] || '#94a3b8';
     const emoji = (g.categoria||'❓').split(' ')[0];
     const dateStr = new Date(g.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'});
-    return `<div class="expense-item">
+    const realIdx = gastos.findIndex(x => x.id === g.id);
+    return `<div class="expense-item" id="expense-${g.id}">
       <div class="expense-icon" style="background:${color}22">${emoji}</div>
       <div class="expense-info">
         <div class="expense-name">${g.descripcion}</div>
@@ -824,6 +825,7 @@ function renderGastos() {
         ${g.msiMeses>0?`<div style="font-size:10px;color:var(--blue);text-align:right">${fmt(g.msiMensualidad)}/mes</div>`:''}
         ${g.mciMeses>0?`<div style="font-size:10px;color:var(--orange);text-align:right">${fmt(g.mciMensualidad)}/mes</div>`:''}
         <div class="expense-date">${dateStr}</div>
+        <button onclick="borrarGasto(${g.id})" style="background:var(--red-dim);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-top:4px">🗑️ Borrar</button>
       </div>
     </div>`;
   }).join('');
@@ -1075,6 +1077,19 @@ function cerrarMes() {
 // ══════════════════════════════════════════
 // LIMPIAR GASTOS
 // ══════════════════════════════════════════
+function borrarGasto(id) {
+  const gasto = gastos.find(g => g.id === id);
+  if(!gasto) return;
+  if(confirm(`¿Borrar "${gasto.descripcion}" — ${fmt(gasto.monto)}?`)) {
+    gastos = gastos.filter(g => g.id !== id);
+    setData('gastos_ferky', gastos);
+    renderGastos();
+    renderDashboard();
+    renderTarjetas();
+    showToast('🗑️ Gasto eliminado');
+  }
+}
+
 function clearConfirm() {
   if(!gastos.length) { showToast('No hay gastos que limpiar'); return; }
   if(confirm(`¿Eliminar los ${gastos.length} gastos registrados?`)) {
