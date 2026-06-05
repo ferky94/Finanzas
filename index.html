@@ -847,9 +847,15 @@ function renderDashboard() {
     cardIngresos.style.display = 'block';
     ingresosList.innerHTML = ingresos.map(i => {
       const dateStr = new Date(i.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'});
-      return `<div class="row">
-        <span class="row-label">${i.nombre}<br><span style="font-size:11px;color:var(--text3)">${dateStr}${i.nota?' · '+i.nota:''}</span></span>
-        <span class="row-value green">+${fmt(i.monto)}</span>
+      return `<div class="row" style="align-items:flex-start">
+        <div style="flex:1">
+          <span class="row-label">${i.nombre}</span><br>
+          <span style="font-size:11px;color:var(--text3)">${dateStr}${i.nota?' · '+i.nota:''}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="row-value green">+${fmt(i.monto)}</span>
+          <button onclick="borrarIngreso(${i.id})" style="background:var(--red-dim);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑️ Borrar</button>
+        </div>
       </div>`;
     }).join('');
   } else if(cardIngresos) {
@@ -1198,27 +1204,49 @@ function guardarIngreso() {
   renderDashboard();
 }
 
+function borrarIngreso(id) {
+  const ingreso = getIngresos().find(i => i.id === id);
+  if(!ingreso) return;
+  ingresoABorrar = id;
+  document.getElementById('borrarNombre').textContent = ingreso.nombre;
+  document.getElementById('borrarMonto').textContent  = '+' + fmt(ingreso.monto);
+  borrarTipo = 'ingreso';
+  document.getElementById('modalBorrar').classList.add('open');
+}
+
+let ingresoABorrar = null;
+let borrarTipo = 'gasto';
 let gastoABorrar = null;
 
 function borrarGasto(id) {
   const gasto = gastos.find(g => g.id === id);
   if(!gasto) return;
   gastoABorrar = id;
+  borrarTipo = 'gasto';
   document.getElementById('borrarNombre').textContent = gasto.descripcion;
   document.getElementById('borrarMonto').textContent  = fmt(gasto.monto);
   document.getElementById('modalBorrar').classList.add('open');
 }
 
 function confirmarBorrar() {
-  if(!gastoABorrar) return;
-  gastos = gastos.filter(g => g.id !== gastoABorrar);
-  gastoABorrar = null;
-  setData('gastos_ferky', gastos);
   document.getElementById('modalBorrar').classList.remove('open');
-  renderGastos();
-  renderDashboard();
-  renderTarjetas();
-  showToast('🗑️ Gasto eliminado');
+  if(borrarTipo === 'ingreso') {
+    if(!ingresoABorrar) return;
+    const ingresos = getIngresos().filter(i => i.id !== ingresoABorrar);
+    ingresoABorrar = null;
+    setData('ingresos_ferky', ingresos);
+    renderDashboard();
+    showToast('🗑️ Ingreso eliminado');
+  } else {
+    if(!gastoABorrar) return;
+    gastos = gastos.filter(g => g.id !== gastoABorrar);
+    gastoABorrar = null;
+    setData('gastos_ferky', gastos);
+    renderGastos();
+    renderDashboard();
+    renderTarjetas();
+    showToast('🗑️ Gasto eliminado');
+  }
 }
 
 function clearConfirm() {
