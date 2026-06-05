@@ -199,7 +199,10 @@ select.form-input{-webkit-appearance:none;appearance:none;}
     </div>
     <div class="header-balance">$<span id="headerBalance">0</span></div>
     <div class="header-sub">disponible este mes</div>
-    <div id="alertPill" class="alert-pill alert-ok">✅ Saldo OK</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <div id="alertPill" class="alert-pill alert-ok" style="margin-top:0;flex:1">✅ Saldo OK</div>
+      <button onclick="abrirIngreso()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Ingreso</button>
+    </div>
   </div>
 
   <!-- TABS -->
@@ -278,6 +281,12 @@ select.form-input{-webkit-appearance:none;appearance:none;}
           <span class="row-label">Valor con interés (6.80%)</span>
           <span class="row-value blue" id="fondoProyectado">$0</span>
         </div>
+      </div>
+
+      <!-- Ingresos registrados -->
+      <div class="card" id="cardIngresos" style="display:none">
+        <div class="card-title">💰 INGRESOS RECIBIDOS</div>
+        <div id="ingresosList"></div>
       </div>
 
       <!-- Gastos por categoría -->
@@ -485,6 +494,39 @@ select.form-input{-webkit-appearance:none;appearance:none;}
   </div>
 </div>
 
+<!-- MODAL RECIBIR INGRESO -->
+<div class="modal-overlay" id="modalIngreso">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💰 Recibir Ingreso</div>
+    <div class="form-group">
+      <label class="form-label">Tipo de ingreso</label>
+      <select class="form-input" id="inputTipoIngreso">
+        <option value="nomina">💼 Nómina</option>
+        <option value="despensa">🛒 Si Vale Despensa</option>
+        <option value="restaurante">🍽️ Si Vale Restaurante</option>
+        <option value="otro">💵 Otro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monto recibido ($)</label>
+      <input class="form-input" id="inputMontoIngreso" type="number" 
+             placeholder="0.00" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fecha</label>
+      <input class="form-input" id="inputFechaIngreso" type="date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas (opcional)</label>
+      <input class="form-input" id="inputNotaIngreso" type="text" 
+             placeholder="Ej. Nómina quincena junio">
+    </div>
+    <button class="btn-primary" onclick="guardarIngreso()">💰 Registrar Ingreso</button>
+    <button class="btn-secondary" onclick="document.getElementById('modalIngreso').classList.remove('open')">Cancelar</button>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMAR BORRAR -->
 <div class="modal-overlay" id="modalBorrar">
   <div class="modal" style="padding-bottom:32px">
@@ -587,6 +629,9 @@ const CONFIG = {
 };
 
 // Liquidez real = saldoMP + saldoHey (los apartados ya están dentro de MP)
+// Ingresos registrados
+function getIngresos() { return getData('ingresos_ferky', []); }
+
 function getLiquidezReal() {
   const pagosHechos = PAGOS.filter((_,i) => (getData('pagos_estado',{})[i] === 'paid'));
   const totalPagado = pagosHechos.reduce((a,p) => a + p.monto, 0);
@@ -596,7 +641,10 @@ function getLiquidezReal() {
   const gastosDebito = gastos
     .filter(g => mediosDebito.includes(g.medio))
     .reduce((a,g) => a + Number(g.monto), 0);
-  return (CONFIG.saldoMP + CONFIG.saldoHey) - totalPagado - totalFijosP - gastosDebito;
+  // Sumar ingresos registrados (nómina, vales)
+  const ingresos = getIngresos();
+  const totalIngresos = ingresos.reduce((a,i) => a + Number(i.monto), 0);
+  return (CONFIG.saldoMP + CONFIG.saldoHey) + totalIngresos - totalPagado - totalFijosP - gastosDebito;
 }
 
 // Saldos iniciales de tarjetas de crédito
@@ -790,6 +838,23 @@ function renderDashboard() {
   document.getElementById('fondoProgress').style.width  = pct + '%';
   document.getElementById('fondoMeses').textContent     = mesesMeta + ' meses';
   document.getElementById('fondoProyectado').textContent = fmt(vf);
+
+  // Ingresos registrados
+  const ingresos = getIngresos();
+  const cardIngresos = document.getElementById('cardIngresos');
+  const ingresosList = document.getElementById('ingresosList');
+  if(ingresos.length && cardIngresos && ingresosList) {
+    cardIngresos.style.display = 'block';
+    ingresosList.innerHTML = ingresos.map(i => {
+      const dateStr = new Date(i.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+      return `<div class="row">
+        <span class="row-label">${i.nombre}<br><span style="font-size:11px;color:var(--text3)">${dateStr}${i.nota?' · '+i.nota:''}</span></span>
+        <span class="row-value green">+${fmt(i.monto)}</span>
+      </div>`;
+    }).join('');
+  } else if(cardIngresos) {
+    cardIngresos.style.display = 'none';
+  }
 
   // Categorías
   const cats = {};
@@ -1103,6 +1168,36 @@ function cerrarMes() {
 // ══════════════════════════════════════════
 // LIMPIAR GASTOS
 // ══════════════════════════════════════════
+// ── INGRESOS ──────────────────────────────
+function abrirIngreso() {
+  document.getElementById('inputFechaIngreso').value = today();
+  document.getElementById('inputMontoIngreso').value = '';
+  document.getElementById('inputNotaIngreso').value = '';
+  document.getElementById('inputTipoIngreso').value = 'nomina';
+  document.getElementById('modalIngreso').classList.add('open');
+}
+
+function guardarIngreso() {
+  const tipo  = document.getElementById('inputTipoIngreso').value;
+  const monto = parseFloat(document.getElementById('inputMontoIngreso').value);
+  const fecha = document.getElementById('inputFechaIngreso').value;
+  const nota  = document.getElementById('inputNotaIngreso').value.trim();
+
+  if(!monto || monto <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+
+  const nombres = {
+    nomina:'💼 Nómina', despensa:'🛒 Si Vale Despensa',
+    restaurante:'🍽️ Si Vale Restaurante', otro:'💵 Otro ingreso'
+  };
+
+  const ingresos = getIngresos();
+  ingresos.push({ tipo, nombre:nombres[tipo], monto, fecha, nota, id:Date.now() });
+  setData('ingresos_ferky', ingresos);
+  document.getElementById('modalIngreso').classList.remove('open');
+  showToast('💰 Ingreso registrado — ' + fmt(monto));
+  renderDashboard();
+}
+
 let gastoABorrar = null;
 
 function borrarGasto(id) {
@@ -1372,6 +1467,9 @@ document.getElementById('modalPagoTC').addEventListener('click', function(e){
   if(e.target===this) this.classList.remove('open');
 });
 document.getElementById('modalBorrar').addEventListener('click', function(e){
+  if(e.target===this) this.classList.remove('open');
+});
+document.getElementById('modalIngreso').addEventListener('click', function(e){
   if(e.target===this) this.classList.remove('open');
 });
 
