@@ -1385,26 +1385,55 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function guardarGasto() {
-  const desc  = document.getElementById('inputDesc').value.trim();
-  const monto = parseFloat(document.getElementById('inputMonto').value);
-  const fecha = document.getElementById('inputFecha').value;
-  const cat   = document.getElementById('inputCat').value;
-  const medio = document.getElementById('inputMedio').value;
-  const nota  = document.getElementById('inputNota').value.trim();
+  const desc   = document.getElementById('inputDesc').value.trim();
+  const monto  = parseFloat(document.getElementById('inputMonto').value);
+  const fecha  = document.getElementById('inputFecha').value;
+  const cat    = document.getElementById('inputCat').value;
+  const medio  = document.getElementById('inputMedio').value;
+  const nota   = document.getElementById('inputNota').value.trim();
+  const tipoCompra = document.getElementById('inputTipoCompra')
+                   ? document.getElementById('inputTipoCompra').value : 'normal';
+
+  let msiMeses=0, msiMensualidad=0, mciMeses=0, mciMensualidad=0, mciTotal=0;
+
+  if(tipoCompra === 'msi') {
+    msiMeses = parseInt(document.getElementById('inputMSI').value) || 0;
+    msiMensualidad = msiMeses > 0 ? monto / msiMeses : 0;
+  } else if(tipoCompra === 'mci') {
+    mciMeses = parseInt(document.getElementById('inputMCIMeses').value) || 0;
+    mciMensualidad = parseFloat(document.getElementById('inputMCIPago').value) || 0;
+    mciTotal = mciMeses * mciMensualidad;
+    if(!mciMeses || !mciMensualidad) {
+      showToast('⚠️ Llena los meses y pago mensual del MCI');
+      return;
+    }
+  }
 
   if(!desc || !monto || monto <= 0) {
     showToast('⚠️ Llena descripción y monto');
     return;
   }
+
+  const montoTarjeta = tipoCompra === 'mci' ? mciTotal : monto;
   const dispAntes = getDisponible();
-  gastos.push({ descripcion:desc, monto, fecha, categoria:cat, medio, nota, id:Date.now() });
+
+  gastos.push({ descripcion:desc, monto:montoTarjeta, montoOriginal:monto,
+                fecha, categoria:cat, medio, nota, tipoCompra,
+                msiMeses, msiMensualidad, mciMeses, mciMensualidad, mciTotal,
+                id:Date.now() });
   setData('gastos_ferky', gastos);
+
   const dispDespues = getDisponible();
   closeModal();
-  showToast('✅ Gasto registrado');
+
+  let toastMsg = '✅ Gasto registrado';
+  if(msiMeses>0) toastMsg += ` — ${msiMeses} MSI de ${fmt(msiMensualidad)}/mes`;
+  if(mciMeses>0) toastMsg += ` — ${mciMeses} MCI de ${fmt(mciMensualidad)}/mes`;
+  showToast(toastMsg);
+
   renderDashboard();
+  renderTarjetas();
   checkNotificaciones(dispAntes, dispDespues);
-  // Actualizar badge
   const badge = document.getElementById('gastosBadge');
   badge.textContent = gastos.length;
   badge.style.display = 'inline-flex';
