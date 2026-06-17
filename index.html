@@ -648,7 +648,8 @@ function getLiquidezReal() {
   // Sumar ingresos registrados (nómina, vales)
   const ingresos = getIngresos();
   const totalIngresos = ingresos.reduce((a,i) => a + Number(i.monto), 0);
-  return (CONFIG.saldoMP + CONFIG.saldoHey) + totalIngresos - totalPagado - totalFijosP - gastosDebito;
+  // Hey Banco está comprometido para pagar TDC Hey — solo MP es libre
+  return CONFIG.saldoMP + totalIngresos - totalPagado - totalFijosP - gastosDebito;
 }
 
 // Saldos iniciales de tarjetas de crédito
