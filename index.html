@@ -45,7 +45,7 @@
     .section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin:20px 0 10px}
     .cuenta-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
     .cuenta-item:last-child{border-bottom:none}
-    .cuenta-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .cuenta-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;letter-spacing:-.5px}
     .cuenta-info{flex:1;min-width:0}
     .cuenta-name{font-size:14px;font-weight:600}
     .cuenta-sub{font-size:11px;color:var(--text3);margin-top:2px}
@@ -57,7 +57,7 @@
     .progress-fill.danger{background:var(--red)}
     .gasto-item{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--border);position:relative}
     .gasto-item:last-child{border-bottom:none}
-    .gasto-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .gasto-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;letter-spacing:-.5px}
     .gasto-info{flex:1;min-width:0}
     .gasto-desc{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .gasto-meta{font-size:11px;color:var(--text3);margin-top:2px}
@@ -147,9 +147,9 @@
     <div class="modal-title">Nuevo Movimiento</div>
     <div class="form-group">
       <div class="tipo-toggle">
-        <div class="tipo-btn active" id="btn-gasto" onclick="setTipo('gasto')">💸 Gasto</div>
-        <div class="tipo-btn" id="btn-pago" onclick="setTipo('pago')">✅ Pago TDC</div>
-        <div class="tipo-btn" id="btn-ingreso" onclick="setTipo('ingreso')">💰 Ingreso</div>
+        <div class="tipo-btn active" id="btn-gasto" onclick="setTipo('gasto')">Gasto</div>
+        <div class="tipo-btn" id="btn-pago" onclick="setTipo('pago')">Pago TDC</div>
+        <div class="tipo-btn" id="btn-ingreso" onclick="setTipo('ingreso')">Ingreso</div>
       </div>
     </div>
     <div class="form-group">
@@ -185,16 +185,16 @@
     <div class="form-group" id="cat-row">
       <label class="form-label">Categoría</label>
       <div class="chips" id="chips-cat">
-        <div class="chip active" onclick="setCat('🛒 Compras')">🛒 Compras</div>
-        <div class="chip" onclick="setCat('🍔 Comida')">🍔 Comida</div>
-        <div class="chip" onclick="setCat('🚗 Transporte')">🚗 Transporte</div>
-        <div class="chip" onclick="setCat('💊 Salud')">💊 Salud</div>
-        <div class="chip" onclick="setCat('🎮 Entretenimiento')">🎮 Entretenimiento</div>
-        <div class="chip" onclick="setCat('🏠 Hogar')">🏠 Hogar</div>
-        <div class="chip" onclick="setCat('👕 Ropa')">👕 Ropa</div>
-        <div class="chip" onclick="setCat('📱 Servicios')">📱 Servicios</div>
-        <div class="chip" onclick="setCat('💰 Nómina')">💰 Nómina</div>
-        <div class="chip" onclick="setCat('🔄 Otros')">🔄 Otros</div>
+        <div class="chip active" onclick="setCat('Compras')">Compras</div>
+        <div class="chip" onclick="setCat('Comida')">Comida</div>
+        <div class="chip" onclick="setCat('Transporte')">Transporte</div>
+        <div class="chip" onclick="setCat('Salud')">Salud</div>
+        <div class="chip" onclick="setCat('Entretenimiento')">Entretenimiento</div>
+        <div class="chip" onclick="setCat('Hogar')">Hogar</div>
+        <div class="chip" onclick="setCat('Ropa')">Ropa</div>
+        <div class="chip" onclick="setCat('Servicios')">Servicios</div>
+        <div class="chip" onclick="setCat('Nomina')">Nomina</div>
+        <div class="chip" onclick="setCat('Otros')">Otros</div>
       </div>
     </div>
     <div class="form-group">
@@ -216,18 +216,18 @@ const GH_TOKEN = 'REEMPLAZAR_TOKEN'; // se actualiza en runtime
 // ─── ESTADO BASE ─────────────────────────────────────────────
 const BASE_STATE = {
   debito:[
-    {id:'bbva_deb', nombre:'BBVA',              tipo:'debito',emoji:'🏦',color:'#1a3a6b',saldo:0,      reservado:false},
-    {id:'hey_deb',  nombre:'HeyBanco',           tipo:'debito',emoji:'💙',color:'#0050ff',saldo:2602.36,reservado:true,notaReservado:'Reservado para pago HeyBanco TDC'},
-    {id:'mp_deb',   nombre:'Mercado Pago',        tipo:'debito',emoji:'💳',color:'#00b1ea',saldo:2800.35,reservado:false},
-    {id:'sivale_d', nombre:'Si Vale Despensa',    tipo:'vales', emoji:'🛒',color:'#2d7a3a',saldo:3351.00,reservado:false},
-    {id:'sivale_r', nombre:'Si Vale Restaurante', tipo:'vales', emoji:'🍴',color:'#7a2d2d',saldo:4730.00,reservado:false},
+    {id:'bbva_deb', nombre:'BBVA',              tipo:'debito',inicial:'BB',color:'#1a3a6b',saldo:0,      reservado:false},
+    {id:'hey_deb',  nombre:'HeyBanco',           tipo:'debito',inicial:'HB',color:'#0050ff',saldo:2602.36,reservado:true,notaReservado:'Reservado para pago HeyBanco TDC'},
+    {id:'mp_deb',   nombre:'Mercado Pago',        tipo:'debito',inicial:'MP',color:'#00b1ea',saldo:2800.35,reservado:false},
+    {id:'sivale_d', nombre:'Si Vale Despensa',    tipo:'vales', inicial:'SD',color:'#2d7a3a',saldo:3351.00,reservado:false},
+    {id:'sivale_r', nombre:'Si Vale Restaurante', tipo:'vales', inicial:'SR',color:'#7a2d2d',saldo:4730.00,reservado:false},
   ],
   credito:[
-    {id:'bbva_cre', nombre:'BBVA TDC',            emoji:'🏦',color:'#1a3a6b',saldoUsado:6501.36, fechaCorte:7,  proximoPago:6501.36,limite:20000, nota:''},
-    {id:'hey_cre',  nombre:'HeyBanco TDC',         emoji:'💙',color:'#0050ff',saldoUsado:2602.33, fechaCorte:25, proximoPago:2602.33,limite:10000, nota:''},
-    {id:'mp_cre',   nombre:'Mercado Pago TDC',     emoji:'💳',color:'#00b1ea',saldoUsado:5308.16, fechaCorte:10, proximoPago:2859.76,limite:15000, nota:'Resto $2,448.40 se va a julio'},
-    {id:'banorte',  nombre:'Banorte TDC',          emoji:'🏛',color:'#c0392b',saldoUsado:0,        fechaCorte:1,  proximoPago:0,      limite:10000, nota:''},
-    {id:'mp_cst',   nombre:'Credito Sin Tarjeta',  emoji:'💵',color:'#00856f',saldoUsado:35622.12,fechaCorte:11, proximoPago:2968.51,limite:35622.12,nota:'12 MSI - 1 pago realizado - Proximo 11 jul',esCreditoPersonal:true},
+    {id:'bbva_cre', nombre:'BBVA TDC',           inicial:'BB',color:'#1a3a6b',saldoUsado:6501.36, fechaCorte:7,  proximoPago:6501.36,limite:20000, nota:''},
+    {id:'hey_cre',  nombre:'HeyBanco TDC',        inicial:'HB',color:'#0050ff',saldoUsado:2602.33, fechaCorte:25, proximoPago:2602.33,limite:10000, nota:''},
+    {id:'mp_cre',   nombre:'Mercado Pago TDC',    inicial:'MP',color:'#00b1ea',saldoUsado:5308.16, fechaCorte:10, proximoPago:2859.76,limite:15000, nota:'Resto $2,448.40 se va a julio'},
+    {id:'banorte',  nombre:'Banorte TDC',         inicial:'BN',color:'#c0392b',saldoUsado:0,        fechaCorte:1,  proximoPago:0,      limite:10000, nota:''},
+    {id:'mp_cst',   nombre:'Credito Sin Tarjeta', inicial:'CS',color:'#00856f',saldoUsado:35622.12,fechaCorte:11, proximoPago:2968.51,limite:35622.12,nota:'12 MSI - 1 pago realizado - Proximo 11 jul',esCreditoPersonal:true},
   ],
   ahorro:1000,
   movimientos:[],
@@ -377,15 +377,15 @@ function renderInicio(el) {
   const ultimos   = [...state.movimientos].sort((a,b)=>b.ts-a.ts).slice(0,5);
   el.innerHTML = `
     <div class="totales-grid">
-      <div class="total-box"><div class="total-box-label">💳 Débito libre</div><div class="total-box-value" style="color:var(--green)">${fmt(totDebito)}</div></div>
-      <div class="total-box"><div class="total-box-label">🛒 Vales</div><div class="total-box-value" style="color:var(--accent2)">${fmt(totVales)}</div></div>
+      <div class="total-box"><div class="total-box-label">Debito libre</div><div class="total-box-value" style="color:var(--green)">${fmt(totDebito)}</div></div>
+      <div class="total-box"><div class="total-box-label">Vales</div><div class="total-box-value" style="color:var(--accent2)">${fmt(totVales)}</div></div>
     </div>
     <div class="ahorro-card">
-      <div class="ahorro-title">🏦 Ahorro</div>
+      <div class="ahorro-title">Ahorro</div>
       <div class="ahorro-value">${fmt(state.ahorro)}</div>
     </div>
     <div class="card">
-      <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px">💸 Próximos pagos TDC + Crédito</div>
+      <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px">Proximos pagos TDC + Credito</div>
       <div style="font-size:28px;font-weight:700;color:var(--red)">${fmt(totCred)}</div>
       <div style="font-size:11px;color:var(--text3);margin-top:2px">Suma de todos los próximos cortes</div>
     </div>
@@ -394,7 +394,7 @@ function renderInicio(el) {
       ${state.movimientos.length>0?`<span class="edit-toggle" onclick="setTab('movimientos')">Ver todos →</span>`:''}
     </div>
     ${ultimos.length===0
-      ?`<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px;color:var(--text3)">Registra tu primer movimiento con +</div></div>`
+      ?`<div class="empty"><div class="empty-icon" style="font-size:32px;color:var(--text3)">( )</div><div style="font-size:14px;color:var(--text3)">Registra tu primer movimiento con +</div></div>`
       :`<div class="card">${ultimos.map(m=>movItem(m,false)).join('')}</div>`}
   `;
 }
@@ -407,7 +407,7 @@ function renderCuentas(el) {
     <div class="section-title">Débito</div>
     <div class="card">${debList.map(c=>`
       <div class="cuenta-item">
-        <div class="cuenta-icon" style="background:${c.color}22">${c.emoji}</div>
+        <div class="cuenta-icon" style="background:${c.color}33;color:${c.color}">${c.inicial}</div>
         <div class="cuenta-info">
           <div class="cuenta-name">${c.nombre}</div>
           <div class="cuenta-sub">${c.reservado?'⚠️ Reservado para pago TDC':'Disponible'}</div>
@@ -417,7 +417,7 @@ function renderCuentas(el) {
     <div class="section-title">Vales</div>
     <div class="card">${valList.map(c=>`
       <div class="cuenta-item">
-        <div class="cuenta-icon" style="background:${c.color}22">${c.emoji}</div>
+        <div class="cuenta-icon" style="background:${c.color}33;color:${c.color}">${c.inicial}</div>
         <div class="cuenta-info"><div class="cuenta-name">${c.nombre}</div><div class="cuenta-sub">Saldo de vales</div></div>
         <div class="cuenta-amount pos">${fmt(c.saldo)}</div>
       </div>`).join('')}</div>
@@ -438,7 +438,7 @@ function renderMovimientos(el) {
       ${movs.length>0?`<span class="edit-toggle" onclick="toggleEdit()">✏️ ${editMode?'Listo':'Editar'}</span>`:''}
     </div>
     ${movs.length===0
-      ?`<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">Registra tu primer movimiento con +</div></div>`
+      ?`<div class="empty"><div class="empty-icon" style="font-size:32px;color:var(--text3)">( )</div><div style="font-size:14px">Registra tu primer movimiento con +</div></div>`
       :`<div class="card">${movs.map(m=>movItem(m,editMode)).join('')}</div>`}
   `;
 }
@@ -450,16 +450,20 @@ function movItem(m, withDelete) {
   const nombre = cuenta ? cuenta.nombre : (m.cuentaId==='ahorro'?'Ahorro':m.cuentaId);
   const fecha  = new Date(m.ts).toLocaleDateString('es-MX',{day:'numeric',month:'short'});
   const msiTag = m.tipoPago==='msi'?` · ${m.msi}MSI`:'';
-  const notaTag = m.nota?` · 📝 ${m.nota}`:'';
+  const notaTag = m.nota?` ·  ${m.nota}`:'';
   const esIngreso = m.tipo==='ingreso';
   const esPago    = m.tipo==='pago';
   const amtClass  = esPago?'pago':esIngreso?'income':'credit';
   const prefix    = esPago?'↩ ':esIngreso?'+':'-';
-  const icon      = esPago?'✅':m.categoria?m.categoria.split(' ')[0]:'💸';
-  const iconBg    = esPago?'rgba(78,205,196,.15)':esIngreso?'rgba(34,197,94,.15)':'rgba(239,68,68,.1)';
+  const catColors = {'Compras':'#6c63ff','Comida':'#f59e0b','Transporte':'#3b82f6','Salud':'#22c55e','Entretenimiento':'#ec4899','Hogar':'#8b5cf6','Ropa':'#f97316','Servicios':'#06b6d4','Nomina':'#22c55e','Otros':'#64748b'};
+  const catLetras = {'Compras':'CO','Comida':'CM','Transporte':'TR','Salud':'SA','Entretenimiento':'EN','Hogar':'HO','Ropa':'RP','Servicios':'SV','Nomina':'NM','Otros':'OT'};
+  const catKey    = m.categoria ? m.categoria.replace(/[^a-zA-Z]/g,'') : 'Otros';
+  const icon      = esPago ? 'TDC' : esIngreso ? 'IN' : (catLetras[catKey] || catKey.slice(0,2).toUpperCase());
+  const iconColor = esPago ? '#4ecdc4' : esIngreso ? '#22c55e' : (catColors[catKey] || '#64748b');
+  const iconBg    = esPago ? 'rgba(78,205,196,.15)' : esIngreso ? 'rgba(34,197,94,.15)' : `${iconColor}22`;
   return `
     <div class="gasto-item ${withDelete?'editing':''}" id="mov-${m.id}">
-      <div class="gasto-icon" style="background:${iconBg}">${icon}</div>
+      <div class="gasto-icon" style="background:${iconBg};color:${iconColor}">${icon}</div>
       <div class="gasto-info">
         <div class="gasto-desc">${m.descripcion}</div>
         <div class="gasto-meta">${fecha} · ${nombre}${msiTag}${notaTag}</div>
@@ -485,7 +489,7 @@ function renderCredito(el) {
       return `<div class="card" style="margin-bottom:12px;border-color:#00856f44">
         <div class="card-row" style="margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:40px;height:40px;border-radius:12px;background:#00856f22;display:flex;align-items:center;justify-content:center;font-size:18px">${c.emoji}</div>
+            <div style="width:40px;height:40px;border-radius:12px;background:#00856f33;color:#00b894;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:-.5px">${c.inicial}</div>
             <div><div style="font-size:15px;font-weight:700">${c.nombre}</div><div style="font-size:11px;color:#00b894">Mercado Pago &bull; Pago dia ${c.fechaCorte}</div></div>
           </div>
           <span class="badge" style="background:#00856f22;color:#00b894">12 MSI</span>
@@ -503,7 +507,7 @@ function renderCredito(el) {
     return `<div class="card" style="margin-bottom:12px">
       <div class="card-row" style="margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:40px;height:40px;border-radius:12px;background:${c.color}22;display:flex;align-items:center;justify-content:center;font-size:18px">${c.emoji}</div>
+          <div style="width:40px;height:40px;border-radius:12px;background:${c.color}33;color:${c.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:-.5px">${c.inicial}</div>
           <div>
             <div style="font-size:15px;font-weight:700">${c.nombre}</div>
             <div style="font-size:11px;color:var(--text3)">Corte día ${c.fechaCorte} <span class="ciclo-badge">${cicloStr}</span></div>
@@ -527,10 +531,10 @@ function renderCredito(el) {
 }
 
 // ─── MODAL ───────────────────────────────────────────────────
-let modalTipo='gasto', modalPago='contado', modalMSI=null, modalCat='🛒 Compras';
+let modalTipo='gasto', modalPago='contado', modalMSI=null, modalCat='Compras';
 
 function openModal() {
-  modalTipo='gasto'; modalPago='contado'; modalMSI=null; modalCat='🛒 Compras';
+  modalTipo='gasto'; modalPago='contado'; modalMSI=null; modalCat='Compras';
   document.getElementById('inp-desc').value='';
   document.getElementById('inp-monto').value='';
   document.getElementById('inp-nota').value='';
@@ -541,7 +545,7 @@ function openModal() {
   document.getElementById('cat-row').style.display='block';
   poblarSelectCuentas();
   setPago('contado');
-  setCat('🛒 Compras');
+  setCat('Compras');
   document.getElementById('modal').classList.add('open');
   setTimeout(()=>document.getElementById('inp-desc').focus(),350);
 }
@@ -572,13 +576,13 @@ function poblarSelectCuentas() {
     });
   } else if (modalTipo==='gasto') {
     state.credito.forEach(c=>{
-      const o=document.createElement('option'); o.value=c.id; o.textContent=c.esCreditoPersonal?'🏧 '+c.nombre+' (MP)':c.nombre; sel.appendChild(o);
+      const o=document.createElement('option'); o.value=c.id; o.textContent=c.esCreditoPersonal?c.nombre+' (MP)':c.nombre; sel.appendChild(o);
     });
     state.debito.forEach(c=>{
       const o=document.createElement('option'); o.value=c.id; o.textContent=c.nombre+(c.tipo==='vales'?' (Vales)':''); sel.appendChild(o);
     });
   } else {
-    const oAhorro=document.createElement('option'); oAhorro.value='ahorro'; oAhorro.textContent='🏦 Ahorro'; sel.appendChild(oAhorro);
+    const oAhorro=document.createElement('option'); oAhorro.value='ahorro'; oAhorro.textContent='Ahorro'; sel.appendChild(oAhorro);
     state.debito.forEach(c=>{
       const o=document.createElement('option'); o.value=c.id; o.textContent=c.nombre+(c.tipo==='vales'?' (Vales)':''); sel.appendChild(o);
     });
@@ -667,7 +671,7 @@ function guardarMovimiento() {
 
   saveState();
   closeModal();
-  const msgs = { gasto:'✅ Gasto registrado', pago:'✅ Pago registrado', ingreso:'✅ Ingreso registrado' };
+  const msgs = { gasto:'Gasto registrado', pago:'Pago registrado', ingreso:'Ingreso registrado' };
   toast(msgs[modalTipo]);
   editMode=false;
   render();
@@ -702,7 +706,7 @@ function borrarMovimiento(id) {
 
   state.movimientos=state.movimientos.filter(m=>m.id!==id);
   saveState();
-  toast('🗑️ Movimiento eliminado');
+  toast(' Movimiento eliminado');
   render();
 }
 
