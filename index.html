@@ -230,11 +230,11 @@ select.form-input{-webkit-appearance:none;appearance:none;}
 
       <div class="kpi-grid">
         <div class="kpi">
-          <div class="kpi-label" id="kpiIngresosLabel">Ingresos esperados</div>
-          <div class="kpi-value green" id="kpiIngresos">$0</div>
+          <div class="kpi-label">🏦 Ahorro acumulado</div>
+          <div class="kpi-value purple" id="kpiAhorro">$0</div>
         </div>
         <div class="kpi">
-          <div class="kpi-label">Variables del mes</div>
+          <div class="kpi-label">🛍️ Variables del mes</div>
           <div class="kpi-value orange" id="kpiVariables">$0</div>
         </div>
       </div>
@@ -617,6 +617,8 @@ select.form-input{-webkit-appearance:none;appearance:none;}
 // ══════════════════════════════════════════
 const CONFIG = {
   ingresos: 41000,
+  valesDespensa: 3351,
+  valesRestaurante: 4730,
   ahorro: 1000,
   umbral: 3000,
   umbralWarn: 4500,
@@ -925,16 +927,16 @@ function renderDashboard() {
   }
 
   // KPIs
-  const ingresosReg = getIngresos().reduce((a,i)=>a+Number(i.monto),0);
-  const kpiIngLabel = document.getElementById('kpiIngresosLabel');
-  if(ingresosReg > 0) {
-    document.getElementById('kpiIngresos').textContent = fmtShort(ingresosReg);
-    if(kpiIngLabel) kpiIngLabel.textContent = '💰 Ingresos recibidos';
-  } else {
-    document.getElementById('kpiIngresos').textContent = fmtShort(CONFIG.ingresos);
-    if(kpiIngLabel) kpiIngLabel.textContent = 'Ingresos esperados';
-  }
-  document.getElementById('kpiVariables').textContent   = fmtShort(vars);
+  // Vales en header
+  if(document.getElementById('valesDespensa'))
+    document.getElementById('valesDespensa').textContent = fmt(CONFIG.valesDespensa);
+  if(document.getElementById('valesRestaurante'))
+    document.getElementById('valesRestaurante').textContent = fmt(CONFIG.valesRestaurante);
+  // KPIs
+  document.getElementById('kpiVariables').textContent = fmtShort(vars);
+  const fondoAcum = getFondoAhorrado();
+  if(document.getElementById('kpiAhorro'))
+    document.getElementById('kpiAhorro').textContent = fmtShort(fondoAcum);
 
   // Pagos pendientes — tarjetas fijas + MSI/MCI + gastos de contado con TDC este ciclo
   const pagosEstad = getData('pagos_estado', {});
@@ -999,7 +1001,7 @@ function renderDashboard() {
   const r = CONFIG.tasaAnual / 12;
   const n = mesesMeta;
   const vf = fondo * Math.pow(1+r, n) + CONFIG.ahorro * ((Math.pow(1+r,n)-1)/r);
-  document.getElementById('fondoAhorrado').textContent  = fmt(fondo) + ' ahorrados';
+  document.getElementById('fondoAhorrado').textContent  = fmt(fondo > 0 ? fondo : 1000) + ' ahorrados';
   document.getElementById('fondoProgress').style.width  = pct + '%';
   document.getElementById('fondoMeses').textContent     = mesesMeta + ' meses';
   document.getElementById('fondoProyectado').textContent = fmt(vf);
