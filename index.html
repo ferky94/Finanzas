@@ -1877,6 +1877,13 @@ document.getElementById('modalIngreso').addEventListener('click', function(e){
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  // Version check — clear cache if outdated
+  const APP_VERSION = '2.0';
+  if(localStorage.getItem('app_version') !== APP_VERSION) {
+    try { localStorage.clear(); } catch(e){}
+    localStorage.setItem('app_version', APP_VERSION);
+    localStorage.removeItem('gh_token'); // Force token re-entry
+  }
   // Load from GitHub first, then render
   loadFromGitHub();
   // Mostrar estado de notificaciones
