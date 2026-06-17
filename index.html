@@ -220,14 +220,14 @@ const BASE_STATE = {
     {id:'hey_deb',  nombre:'HeyBanco',           tipo:'debito',emoji:'💙',color:'#0050ff',saldo:2602.36,reservado:true,notaReservado:'Reservado para pago HeyBanco TDC'},
     {id:'mp_deb',   nombre:'Mercado Pago',        tipo:'debito',emoji:'💳',color:'#00b1ea',saldo:2800.35,reservado:false},
     {id:'sivale_d', nombre:'Si Vale Despensa',    tipo:'vales', emoji:'🛒',color:'#2d7a3a',saldo:3351.00,reservado:false},
-    {id:'sivale_r', nombre:'Si Vale Restaurante', tipo:'vales', emoji:'🍽️',color:'#7a2d2d',saldo:4730.00,reservado:false},
+    {id:'sivale_r', nombre:'Si Vale Restaurante', tipo:'vales', emoji:'🍴',color:'#7a2d2d',saldo:4730.00,reservado:false},
   ],
   credito:[
     {id:'bbva_cre', nombre:'BBVA TDC',            emoji:'🏦',color:'#1a3a6b',saldoUsado:6501.36, fechaCorte:7,  proximoPago:6501.36,limite:20000, nota:''},
     {id:'hey_cre',  nombre:'HeyBanco TDC',         emoji:'💙',color:'#0050ff',saldoUsado:2602.33, fechaCorte:25, proximoPago:2602.33,limite:10000, nota:''},
     {id:'mp_cre',   nombre:'Mercado Pago TDC',     emoji:'💳',color:'#00b1ea',saldoUsado:5308.16, fechaCorte:10, proximoPago:2859.76,limite:15000, nota:'Resto $2,448.40 se va a julio'},
-    {id:'banorte',  nombre:'Banorte TDC',          emoji:'🔴',color:'#c0392b',saldoUsado:0,        fechaCorte:1,  proximoPago:0,      limite:10000, nota:''},
-    {id:'mp_cst',   nombre:'Crédito Sin Tarjeta',  emoji:'🏧',color:'#00856f',saldoUsado:35622.12,fechaCorte:11, proximoPago:2968.51,limite:35622.12,nota:'12 MSI · 1 pago realizado · Próximo 11 jul',esCreditoPersonal:true},
+    {id:'banorte',  nombre:'Banorte TDC',          emoji:'🏛',color:'#c0392b',saldoUsado:0,        fechaCorte:1,  proximoPago:0,      limite:10000, nota:''},
+    {id:'mp_cst',   nombre:'Credito Sin Tarjeta',  emoji:'💵',color:'#00856f',saldoUsado:35622.12,fechaCorte:11, proximoPago:2968.51,limite:35622.12,nota:'12 MSI - 1 pago realizado - Proximo 11 jul',esCreditoPersonal:true},
   ],
   ahorro:1000,
   movimientos:[],
@@ -486,17 +486,17 @@ function renderCredito(el) {
         <div class="card-row" style="margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:10px">
             <div style="width:40px;height:40px;border-radius:12px;background:#00856f22;display:flex;align-items:center;justify-content:center;font-size:18px">${c.emoji}</div>
-            <div><div style="font-size:15px;font-weight:700">${c.nombre}</div><div style="font-size:11px;color:#00b894">Mercado Pago · Pago día ${c.fechaCorte}</div></div>
+            <div><div style="font-size:15px;font-weight:700">${c.nombre}</div><div style="font-size:11px;color:#00b894">Mercado Pago &bull; Pago dia ${c.fechaCorte}</div></div>
           </div>
           <span class="badge" style="background:#00856f22;color:#00b894">12 MSI</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
           <div><div style="font-size:11px;color:var(--text3)">Saldo restante</div><div style="font-size:18px;font-weight:700;color:var(--red)">${fmt(c.saldoUsado)}</div></div>
-          <div><div style="font-size:11px;color:var(--text3)">Próximo pago</div><div style="font-size:18px;font-weight:700;color:var(--yellow)">${fmt(c.proximoPago)}</div></div>
+          <div><div style="font-size:11px;color:var(--text3)">Proximo pago</div><div style="font-size:18px;font-weight:700;color:var(--yellow)">${fmt(c.proximoPago)}</div></div>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${Math.round((pagosHechos/12)*100)}%;background:#00b894"></div></div>
-        <div style="font-size:10px;color:var(--text3);margin-top:6px">${pagosHechos} de 12 pagos · ${pagosRestantes} restantes · ${fmt(c.proximoPago)}/mes</div>
-        ${c.nota?`<div style="margin-top:6px;font-size:11px;color:#00b894;opacity:.8">ℹ️ ${c.nota}</div>`:''}
+        <div style="font-size:10px;color:var(--text3);margin-top:6px">${pagosHechos} de 12 pagos &bull; ${pagosRestantes} restantes &bull; ${fmt(c.proximoPago)}/mes</div>
+        ${c.nota?`<div style="margin-top:6px;font-size:11px;color:#00b894;opacity:.8">${c.nota}</div>`:''}
       </div>`;
     }
 
