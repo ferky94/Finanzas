@@ -956,8 +956,13 @@ function renderDashboard() {
     document.getElementById('kpiAhorro').textContent = fmtShort(fondoAcum);
 
   // Pagos pendientes — tarjetas fijas + MSI/MCI + gastos de contado con TDC este ciclo
+  // Siempre leer fresco del storage
   const pagosEstad = getData('pagos_estado', {});
-  const pendFijos  = PAGOS.reduce((a,p,i) => a + (pagosEstad[i] !== 'paid' ? p.monto : 0), 0);
+  // Si no hay estados guardados, todos están pendientes
+  const pendFijos  = PAGOS.reduce((a,p,i) => {
+    const estado = pagosEstad[i];
+    return a + (estado !== 'paid' ? p.monto : 0);
+  }, 0);
 
   // Días de corte por tarjeta
   const CORTES = {
@@ -1241,6 +1246,11 @@ function renderGastosList(query) {
 // ══════════════════════════════════════════
 function renderPagos() {
   pagosEst = getData('pagos_estado', {});
+  // Reiniciar si está vacío para mostrar todos como pendientes
+  if(Object.keys(pagosEst).length === 0) {
+    PAGOS.forEach((_,i) => { pagosEst[i] = 'pending'; });
+    setData('pagos_estado', pagosEst);
+  }
   const list11 = document.getElementById('pagosList11');
   const list15 = document.getElementById('pagosList15');
 
