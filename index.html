@@ -320,7 +320,7 @@ function rInicio(el){
     +'<div style="font-size:28px;font-weight:700;color:var(--red)">'+fmt(tC)+'</div>'
     +'<div style="font-size:11px;color:var(--text3);margin-top:2px">Suma de todos los proximos cortes</div></div>'
     +'<div class="stitle" style="display:flex;justify-content:space-between;align-items:center">Ultimos movimientos'
-    +(S.movs.length>0?'<span class="etog" onclick="goTab(\'movs\')">Ver todos</span>':'')+'</div>'
+    +(S.movs.length>0?'<span class="etog" onclick="goTab(&quot;movs&quot;)">Ver todos</span>':'')+'</div>'
     +(ul.length===0?'<div class="empty">Sin movimientos aun. Usa el + para agregar.</div>'
       :'<div class="card">'+ul.map(function(m){return mItem(m,false);}).join('')+'</div>');
 }
@@ -373,7 +373,7 @@ function mItem(m,ed){
     +'<div style="flex:1;min-width:0"><div class="mn">'+m.desc+'</div>'
     +'<div class="mm">'+fecha+' - '+nom+mt+nt+'</div></div>'
     +'<div class="ma '+acls+'">'+pre+fmt(m.monto)+'</div>'
-    +(ed?'<button class="delbtn" onclick="borrar(\''+m.id+'\')">x</button>':'')
+    +(ed?'<button class="delbtn" onclick="borrar(&quot;'+m.id+'&quot;)">x</button>':'')
     +'</div>';
 }
 
