@@ -620,14 +620,14 @@ const CONFIG = {
   ahorro: 1000,
   umbral: 3000,
   umbralWarn: 4500,
-  gastosFijos: 13537, // Solo transferencias: renta $2,000 + carro $10,800 + deuda 4m $737
-  compromisos: 12245.29,
+  gastosFijos: 12725, // Renta $2,000 + Carro $10,725.18
+  compromisos: 12721.60, // Pagos reales julio: Hey+BBVA+MP TC+MP Crédito
   fondoMeta: 50000,
   tasaAnual: 0.068,
-  // Saldos reales de HOY (3 junio 2026)
-  saldoMP:        9113.16,
-  saldoMPApart:   5948.32,  // apartados (comprometidos)
-  saldoHey:       2852.68,
+  // Saldos reales de HOY (15 junio 2026)
+  saldoMP:        2796.28,   // MP Débito libre
+  saldoMPApart:   10151.47,  // MP Apartado (cubre pagos pendientes)
+  saldoHey:       2602.36,   // Hey Banco (destinado a pagar TDC Hey)
 };
 
 // Liquidez real = saldoMP + saldoHey (los apartados ya están dentro de MP)
@@ -651,10 +651,10 @@ function getLiquidezReal() {
 
 // Saldos iniciales de tarjetas de crédito
 const TARJETAS = [
-  { id:'hey',    nombre:'💳 Hey Banco TC',       saldoInicial:5109.80,  limite:14433.78, medio:'💳 Crédito Hey'        },
-  { id:'bbva',   nombre:'💳 BBVA TC',             saldoInicial:7666.82,  limite:52500.00, medio:'💳 Crédito BBVA'       },
-  { id:'mp_tc',  nombre:'💳 MP Tarjeta crédito',  saldoInicial:2948.00,  limite:18000.00, medio:'💳 MP Tarjeta crédito' },
-  { id:'banorte',nombre:'🏦 Banorte',             saldoInicial:1334.00,  limite:16500.00, medio:'💳 Crédito Banorte'    },
+  { id:'hey',    nombre:'💳 Hey Banco TC',       saldoInicial:2602.33,  limite:14433.78, medio:'💳 Crédito Hey'        },
+  { id:'bbva',   nombre:'💳 BBVA TC',             saldoInicial:4291.00,  limite:52500.00, medio:'💳 Crédito BBVA'       },
+  { id:'mp_tc',  nombre:'💳 MP Tarjeta crédito',  saldoInicial:5308.16,  limite:18000.00, medio:'💳 MP Tarjeta crédito' },
+  { id:'banorte',nombre:'🏦 Banorte',             saldoInicial:0,        limite:16500.00, medio:'💳 Crédito Banorte'    },
 ];
 
 function getSaldoTarjeta(tarjetaId) {
@@ -678,22 +678,18 @@ function registrarPagoTC(tarjetaId, monto, tipo) {
 
 // Pagos de tarjetas/créditos — salen de tus cuentas MP/Hey ANTES de la nómina
 const PAGOS = [
-  // antes del 11 — salen de lo que tienes ahorita
-  { nombre:"💳 Hey Banco TC",           monto:2507.47, dia:"Día 11", corte:"Día 25", grupo:"11", urgente:true },
-  { nombre:"💸 MP Crédito pago único",  monto:1054.19, dia:"Día 11", corte:"N/A",    grupo:"11", urgente:true },
-  { nombre:"💸 MP Crédito 12m (1er pago)", monto:2968.56, dia:"Día 11", corte:"N/A", grupo:"11", urgente:true },
-  // el 15 — se pagan cuando cae la nómina
-  { nombre:"💳 BBVA TC",                monto:7666.82, dia:"Día 27", corte:"Día 7",  grupo:"15", urgente:false },
-  { nombre:"💳 MP Tarjeta (4 MSI)",     monto:737.00,  dia:"Por confirmar", corte:"Día 7", grupo:"15", urgente:false },
-  { nombre:"🏦 Banorte anualidad",      monto:1334.00, dia:"Por confirmar", corte:"Día 11", grupo:"15", urgente:false },
+  // pagos del mes — julio 2026
+  { nombre:"💳 Hey Banco TC",              monto:2602.33, dia:"Día 15", corte:"Día 25", grupo:"15", urgente:false },
+  { nombre:"💳 BBVA TC",                   monto:4291.00, dia:"Día 27", corte:"Día 7",  grupo:"15", urgente:false },
+  { nombre:"💳 MP Tarjeta (próx. pago)",   monto:2859.76, dia:"Por confirmar", corte:"Día 7", grupo:"15", urgente:false },
+  { nombre:"💸 MP Crédito 12m (3/12)",     monto:2968.51, dia:"Día 11", corte:"N/A",    grupo:"11", urgente:true  },
 ];
 
 // Gastos fijos — solo los que se pagan por transferencia/SPEI directo
 // Los cargos automáticos a tarjeta (seguro moto, spotify, AT&T, etc.) ya viven en el saldo de cada tarjeta
 const FIJOS_NOMINA = [
-  { nombre:"🏠 Renta",         monto:2000,  dia:"Día 15", nota:"Transferencia directa" },
-  { nombre:"🚗 Carro",         monto:10800, dia:"Día 15", nota:"Transferencia directa" },
-  { nombre:"💳 Deuda 4 meses", monto:737,   dia:"Día 15", nota:"SPEI" },
+  { nombre:"🏠 Renta",         monto:2000,    dia:"Día 15", nota:"Transferencia directa" },
+  { nombre:"🚗 Carro",         monto:10725.18,dia:"Día 17", nota:"Cargo automático" },
 ];
 // Nota: AT&T, equipo celular, seguro moto, Spotify, Microsoft ya están en saldos de tarjetas
 
