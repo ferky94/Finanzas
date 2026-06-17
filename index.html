@@ -810,8 +810,7 @@ async function loadFromGitHub() {
       _dataSHA = file.sha;
       const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
       _dataCache = JSON.parse(decoded);
-      // Clear ALL localStorage first, then sync from GitHub
-      try { localStorage.clear(); } catch(e){}
+      // Sync GitHub data to localStorage
       Object.entries(_dataCache).forEach(([k,v]) => {
         try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
       });
