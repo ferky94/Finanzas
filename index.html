@@ -783,72 +783,48 @@ async function saveToGitHub() {
 
 // Load data from GitHub on startup
 async function loadFromGitHub() {
-  // Seed correct base data ALWAYS on fresh install
-  const SEED_KEY = 'seeded_v4';
-  if(!localStorage.getItem(SEED_KEY)) {
-    localStorage.setItem(SEED_KEY, '1');
-    localStorage.setItem('pagos_estado', JSON.stringify({"0":"pending","1":"pending","2":"pending","3":"pending"}));
-    localStorage.setItem('ingresos_ferky', JSON.stringify([{
-      "tipo":"ahorro_nu","nombre":"🏦 Ahorro Nu","monto":1000,
-      "fecha":"2026-06-15","nota":"Primer depósito fondo emergencia","id":1718409600000
-    }]));
-    localStorage.setItem('gastos_ferky', JSON.stringify([]));
-    localStorage.setItem('historial_ferky', JSON.stringify([]));
-    localStorage.setItem('pagos_tc_hey', JSON.stringify([]));
-    localStorage.setItem('pagos_tc_bbva', JSON.stringify([]));
-    localStorage.setItem('pagos_tc_mp_tc', JSON.stringify([]));
-    localStorage.setItem('pagos_tc_banorte', JSON.stringify([]));
+  showSyncStatus('🔄 Cargando...');
+
+  // Get token
+  let token = getGHToken();
+  if(!token) {
+    const t = prompt('Pega tu token de GitHub para activar la nube:');
+    if(t && t.trim()) { setGHToken(t.trim()); token = t.trim(); }
+    else {
+      _appReady = true; _dataCache = {};
+      gastos = []; renderDashboard(); renderPagos(); renderTarjetas();
+      showSyncStatus('⚠️ Sin token');
+      return;
+    }
   }
 
-  // Load from cache first (instant render)
-  _dataCache = {};
-  const keys = ['gastos_ferky','ingresos_ferky','historial_ferky','pagos_estado',
-                 'pagos_tc_hey','pagos_tc_bbva','pagos_tc_mp_tc','pagos_tc_banorte'];
-  keys.forEach(k => {
-    try { const v = localStorage.getItem(k); if(v) _dataCache[k] = JSON.parse(v); } catch(e){}
-  });
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now(), {
+      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github+json' }
+    });
+
+    if(res.ok) {
+      const file = await res.json();
+      _dataSHA = file.sha;
+      const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+      _dataCache = JSON.parse(decoded);
+      showSyncStatus('✅ Datos cargados');
+    } else if(res.status === 404) {
+      _dataCache = {};
+      showSyncStatus('✅ App lista');
+    } else {
+      throw new Error('HTTP ' + res.status);
+    }
+  } catch(e) {
+    _dataCache = {};
+    showSyncStatus('⚠️ Sin conexión');
+  }
 
   _appReady = true;
   gastos = getData('gastos_ferky', []);
   renderDashboard();
   renderPagos();
   renderTarjetas();
-  showSyncStatus('✅ Listo');
-
-  // Then try GitHub in background
-  const token = getGHToken();
-  if(!token) {
-    const t = prompt('Pega tu token de GitHub para guardar datos en la nube:');
-    if(t && t.trim()) setGHToken(t.trim());
-    else return;
-  }
-
-  try {
-    showSyncStatus('🔄 Sincronizando...');
-    const res = await fetch(API_URL + '?t=' + Date.now(), {
-      headers: { 'Authorization': `token ${getGHToken()}`, 'Accept': 'application/vnd.github+json' }
-    });
-    if(res.ok) {
-      const file = await res.json();
-      _dataSHA = file.sha;
-      const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-      const ghData = JSON.parse(decoded);
-      // Only use GitHub data if it has real content
-      if(ghData.pagos_estado && Object.keys(ghData.pagos_estado).length > 0) {
-        _dataCache = ghData;
-        Object.entries(_dataCache).forEach(([k,v]) => {
-          try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
-        });
-        gastos = getData('gastos_ferky', []);
-        renderDashboard();
-        renderPagos();
-        renderTarjetas();
-        showSyncStatus('✅ Datos sincronizados');
-      }
-    }
-  } catch(e) {
-    showSyncStatus('⚠️ Sin conexión — datos locales');
-  }
 }
 
 
