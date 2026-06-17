@@ -199,7 +199,12 @@ select.form-input{-webkit-appearance:none;appearance:none;}
       <span class="header-month" id="currentMonth"></span>
     </div>
     <div class="header-balance">$<span id="headerBalance">0</span></div>
-    <div class="header-sub">disponible este mes</div>
+    <div style="display:flex;gap:14px;margin-top:5px;align-items:center">
+      <span style="font-size:12px;color:#94a3b8">🛒 <span id="valesDespensa">$3,351</span></span>
+      <span style="font-size:12px;color:#64748b">·</span>
+      <span style="font-size:12px;color:#94a3b8">🍽️ <span id="valesRestaurante">$4,730</span></span>
+      <span style="font-size:12px;color:#475569">en vales</span>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
       <div id="alertPill" class="alert-pill alert-ok" style="margin-top:0;flex:1">✅ Saldo OK</div>
       <button onclick="abrirIngreso()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Ingreso</button>
