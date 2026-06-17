@@ -417,7 +417,7 @@ select.form-input{-webkit-appearance:none;}
 const CONFIG = {
   // Saldos reales
   saldoMP:         2796.28,  // MP Débito libre
-  saldoHey:        2602.36,  // Hey Banco → destinado a pagar TDC Hey
+  saldoHey:        0,        // Hey Banco destinado a TDC — no es liquidez libre
   valesDespensa:   3351.00,
   valesRestaurante:4730.00,
   // Financiero
@@ -428,7 +428,7 @@ const CONFIG = {
   gastosFijos:     12725.18, // Renta + Carro
   compromisos:     12721.60,
   fondoMeta:       50000,
-  fondoInicial:    1000,     // Ya depositado en Nu
+  fondoInicial:    0,         // El depósito está en ingresos_ferky
   tasaAnual:       0.068,
 };
 
