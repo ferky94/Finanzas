@@ -630,7 +630,7 @@ const CONFIG = {
   gastosFijos: 12725, // Renta $2,000 + Carro $10,725.18
   compromisos: 12721.60, // Pagos reales julio: Hey+BBVA+MP TC+MP Crédito
   fondoMeta: 50000,
-  fondoInicial: 1000,  // Ya depositado en Nu
+  fondoInicial: 1000,
   tasaAnual: 0.068,
   // Saldos reales de HOY (15 junio 2026)
   saldoMP:        2796.28,   // MP Débito libre
@@ -914,7 +914,7 @@ function getFondoAhorrado() {
 function renderDashboard() {
   const vars = getTotalVariables();
   const disp = getDisponible();
-  const fondo = getFondoAhorrado();
+  const fondo = getFondoAhorrado() || CONFIG.fondoInicial;
 
   // Liquidez real (dinero físico menos pagos ya hechos)
   const liq = getLiquidezReal();
@@ -956,7 +956,7 @@ function renderDashboard() {
     document.getElementById('valesRestaurante').textContent = fmt(saldoValeR);
   // KPIs
   document.getElementById('kpiVariables').textContent = fmtShort(vars);
-  const fondoAcum = getFondoAhorrado();
+  const fondoAcum = getFondoAhorrado() || CONFIG.fondoInicial;
   if(document.getElementById('kpiAhorro'))
     document.getElementById('kpiAhorro').textContent = fmtShort(fondoAcum);
 
@@ -1013,7 +1013,11 @@ function renderDashboard() {
     .filter(g => g.mciMeses > 0)
     .reduce((a,g) => a + Number(g.mciMensualidad), 0);
 
-  const pendTotal = pendFijos + pendMSI + pendMCI + gastosContadoTDC;
+  // Si pendFijos = 0 y no hay pagos marcados, mostrar total completo
+  const totalPAGOS = PAGOS.reduce((a,p) => a+p.monto, 0);
+  const hayEstados = Object.keys(pagosEstad).length > 0;
+  const pendBase = hayEstados ? pendFijos : totalPAGOS;
+  const pendTotal = pendBase + pendMSI + pendMCI + gastosContadoTDC;
   if(document.getElementById('kpiPendientes'))
     document.getElementById('kpiPendientes').textContent = fmt(pendTotal);
 
