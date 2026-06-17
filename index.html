@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mis Finanzas" />
+  <title>Mis Finanzas</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #181b24;
+      --bg3: #1f2330;
+      --card: #242838;
+      --border: #2e3347;
+      --accent: #6c63ff;
+      --accent2: #4ecdc4;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; overscroll-behavior: none; }
+
+    /* LAYOUT */
+    #app { display: flex; flex-direction: column; height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; }
+    #header { padding: 52px 20px 16px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    #content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; }
+    #nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+
+    /* HEADER */
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .header-title { font-size: 13px; color: var(--text2); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    .header-date { font-size: 12px; color: var(--text3); }
+    .total-disponible { font-size: 36px; font-weight: 700; letter-spacing: -1px; color: var(--text); }
+    .total-label { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    /* NAV */
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 8px; border: none; background: none; color: var(--text3); font-size: 10px; font-weight: 500; cursor: pointer; transition: color 0.2s; }
+    .nav-btn svg { width: 22px; height: 22px; }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn.active svg { stroke: var(--accent); }
+
+    /* FAB */
+    #fab { position: fixed; bottom: calc(70px + env(safe-area-inset-bottom)); right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px rgba(108,99,255,0.5); z-index: 99; transition: transform 0.15s; }
+    #fab:active { transform: scale(0.93); }
+
+    /* CARDS */
+    .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .card-row { display: flex; justify-content: space-between; align-items: center; }
+    .card-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+    .card-value { font-size: 18px; font-weight: 700; }
+    .card-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+    .badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+    .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .badge-purple { background: rgba(108,99,255,0.15); color: var(--accent); }
+    .badge-teal { background: rgba(78,205,196,0.15); color: var(--accent2); }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin: 20px 0 10px; }
+
+    /* CUENTA ITEM */
+    .cuenta-item { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .cuenta-item:last-child { border-bottom: none; }
+    .cuenta-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .cuenta-info { flex: 1; min-width: 0; }
+    .cuenta-name { font-size: 14px; font-weight: 600; }
+    .cuenta-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .cuenta-amount { font-size: 16px; font-weight: 700; text-align: right; }
+    .cuenta-amount.neg { color: var(--red); }
+    .cuenta-amount.pos { color: var(--green); }
+
+    /* PROGRESS BAR */
+    .progress-bar { height: 4px; border-radius: 2px; background: var(--bg3); margin-top: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.4s; }
+    .progress-fill.warn { background: var(--yellow); }
+    .progress-fill.danger { background: var(--red); }
+
+    /* GASTO ITEM */
+    .gasto-item { display: flex; align-items: center; gap: 11px; padding: 12px 0; border-bottom: 1px solid var(--border); position: relative; }
+    .gasto-item:last-child { border-bottom: none; }
+    .gasto-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .gasto-info { flex: 1; min-width: 0; }
+    .gasto-desc { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gasto-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .gasto-amount { font-size: 15px; font-weight: 700; text-align: right; flex-shrink: 0; }
+    .gasto-amount.credit { color: var(--red); }
+    .gasto-amount.income { color: var(--green); }
+    .delete-btn { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%; background: var(--red); border: none; color: #fff; font-size: 14px; display: none; align-items: center; justify-content: center; cursor: pointer; }
+    .gasto-item.editing .delete-btn { display: flex; }
+    .gasto-item.editing { padding-right: 28px; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: var(--bg2); border-radius: 24px 24px 0 0; padding: 0 20px 32px; width: 100%; max-height: 90dvh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 12px auto 20px; }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+    /* FORM */
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 6px; display: block; }
+    .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; -webkit-appearance: none; }
+    .form-input:focus { border-color: var(--accent); }
+    select.form-input option { background: var(--bg3); }
+    .tipo-toggle { display: flex; gap: 8px; }
+    .tipo-btn { flex: 1; padding: 11px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .tipo-btn.active { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+    .tipo-btn.active.income { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+
+    .btn-primary { width: 100%; padding: 15px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+    .btn-primary:active { opacity: 0.85; }
+
+    /* MSI row */
+    #msi-row { display: none; }
+    #msi-row.show { display: block; }
+
+    /* CHIPS */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .chip.active { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 48px 20px; color: var(--text3); }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+
+    /* RESUMEN TOTALES */
+    .totales-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .total-box { background: var(--card); border-radius: var(--radius-sm); padding: 14px; border: 1px solid var(--border); }
+    .total-box-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+    .total-box-value { font-size: 20px; font-weight: 700; }
+
+    /* AHORRO */
+    .ahorro-card { background: linear-gradient(135deg, #1a1f3a, #0f2027); border: 1px solid #2a3a5c; border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+    .ahorro-title { font-size: 12px; color: var(--accent2); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+    .ahorro-value { font-size: 32px; font-weight: 700; color: var(--accent2); }
+
+    /* NOTA RESERVADO */
+    .nota-reservado { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: var(--yellow); margin-top: 8px; }
+
+    /* TOAST */
+    #toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 500; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* EDIT MODE */
+    .edit-toggle { font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="header-top">
+      <span class="header-title">Mis Finanzas</span>
+      <span class="header-date" id="fecha"></span>
+    </div>
+    <div class="total-disponible" id="total-display">$0.00</div>
+    <div class="total-label">disponible total</div>
+  </div>
+
+  <div id="content">
+    <!-- Vistas se renderizan aquí -->
+  </div>
+
+  <nav id="nav">
+    <button class="nav-btn active" data-tab="inicio" onclick="setTab('inicio')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Inicio
+    </button>
+    <button class="nav-btn" data-tab="cuentas" onclick="setTab('cuentas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Cuentas
+    </button>
+    <button class="nav-btn" data-tab="movimientos" onclick="setTab('movimientos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="4"/><polyline points="6 10 12 4 18 10"/></svg>
+      Movimientos
+    </button>
+    <button class="nav-btn" data-tab="credito" onclick="setTab('credito')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      TDC
+    </button>
+  </nav>
+
+  <button id="fab" onclick="openModal()">＋</button>
+</div>
+
+<!-- MODAL AGREGAR -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Nuevo Movimiento</div>
+
+    <div class="form-group">
+      <div class="tipo-toggle">
+        <div class="tipo-btn active" id="btn-gasto" onclick="setTipo('gasto')">💸 Gasto</div>
+        <div class="tipo-btn" id="btn-ingreso" onclick="setTipo('ingreso')" style="--accent:var(--green)">💰 Ingreso</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <input class="form-input" id="inp-desc" placeholder="¿En qué gastaste?" type="text" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Monto (MXN)</label>
+      <input class="form-input" id="inp-monto" placeholder="0.00" type="number" inputmode="decimal" step="0.01" min="0" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" id="label-cuenta">Tarjeta / Cuenta</label>
+      <select class="form-input" id="sel-cuenta" onchange="onCuentaChange()"></select>
+    </div>
+
+    <div class="form-group" id="pago-row">
+      <label class="form-label">Tipo de pago</label>
+      <div class="chips" id="chips-pago">
+        <div class="chip active" onclick="setPago('contado')">Contado</div>
+        <div class="chip" onclick="setPago('msi')">MSI</div>
+      </div>
+    </div>
+
+    <div class="form-group" id="msi-row">
+      <label class="form-label">¿Cuántos meses?</label>
+      <div class="chips" id="chips-msi">
+        <div class="chip" onclick="setMSI(3)">3 MSI</div>
+        <div class="chip" onclick="setMSI(6)">6 MSI</div>
+        <div class="chip" onclick="setMSI(9)">9 MSI</div>
+        <div class="chip" onclick="setMSI(12)">12 MSI</div>
+        <div class="chip" onclick="setMSI(18)">18 MSI</div>
+        <div class="chip" onclick="setMSI(24)">24 MSI</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <div class="chips" id="chips-cat">
+        <div class="chip active" onclick="setCat('🛒 Compras')">🛒 Compras</div>
+        <div class="chip" onclick="setCat('🍔 Comida')">🍔 Comida</div>
+        <div class="chip" onclick="setCat('🚗 Transporte')">🚗 Transporte</div>
+        <div class="chip" onclick="setCat('💊 Salud')">💊 Salud</div>
+        <div class="chip" onclick="setCat('🎮 Entretenimiento')">🎮 Entretenimiento</div>
+        <div class="chip" onclick="setCat('🏠 Hogar')">🏠 Hogar</div>
+        <div class="chip" onclick="setCat('👕 Ropa')">👕 Ropa</div>
+        <div class="chip" onclick="setCat('📱 Servicios')">📱 Servicios</div>
+        <div class="chip" onclick="setCat('💰 Nómina')">💰 Nómina</div>
+        <div class="chip" onclick="setCat('🔄 Otros')">🔄 Otros</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="guardarMovimiento()">Guardar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// ESTADO INICIAL
+// ============================================================
+const INITIAL_STATE = {
+  debito: [
+    { id: 'bbva_deb',  nombre: 'BBVA',              tipo: 'debito', emoji: '🏦', color: '#1a3a6b', saldo: 0,       reservado: false },
+    { id: 'hey_deb',   nombre: 'HeyBanco',           tipo: 'debito', emoji: '💙', color: '#0050ff', saldo: 2602.36, reservado: true, notaReservado: 'Reservado para pago HeyBanco TDC' },
+    { id: 'mp_deb',    nombre: 'Mercado Pago',        tipo: 'debito', emoji: '💳', color: '#00b1ea', saldo: 2800.35, reservado: false },
+    { id: 'sivale_d',  nombre: 'Si Vale Despensa',    tipo: 'vales',  emoji: '🛒', color: '#2d7a3a', saldo: 3351.00, reservado: false },
+    { id: 'sivale_r',  nombre: 'Si Vale Restaurante', tipo: 'vales',  emoji: '🍽️', color: '#7a2d2d', saldo: 4730.00, reservado: false },
+  ],
+  credito: [
+    { id: 'bbva_cre',  nombre: 'BBVA TDC',          emoji: '🏦', color: '#1a3a6b', saldoUsado: 6501.36, fechaCorte: 7,  proximoPago: 6501.36, limite: 20000 },
+    { id: 'hey_cre',   nombre: 'HeyBanco TDC',      emoji: '💙', color: '#0050ff', saldoUsado: 2602.33, fechaCorte: 25, proximoPago: 2602.33, limite: 10000 },
+    { id: 'mp_cre',    nombre: 'Mercado Pago TDC',  emoji: '💳', color: '#00b1ea', saldoUsado: 5308.16, fechaCorte: 10, proximoPago: 2859.76, limite: 15000 },
+    { id: 'banorte',   nombre: 'Banorte TDC',       emoji: '🔴', color: '#c0392b', saldoUsado: 0,       fechaCorte: 1,  proximoPago: 0,       limite: 10000 },
+  ],
+  ahorro: 0,
+  movimientos: [],
+  msiActivos: [], // { id, cuentaId, total, meses, mesesRestantes, abonoPorMes, fechaInicio }
+};
+
+// ============================================================
+// PERSISTENCIA LOCAL
+// ============================================================
+function loadState() {
+  try {
+    const raw = localStorage.getItem('finanzas_v2');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(INITIAL_STATE));
+}
+
+function saveState() {
+  localStorage.setItem('finanzas_v2', JSON.stringify(state));
+}
+
+let state = loadState();
+
+// ============================================================
+// NAV & TABS
+// ============================================================
+let currentTab = 'inicio';
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  render();
+}
+
+// ============================================================
+// RENDER PRINCIPAL
+// ============================================================
+function fmt(n) {
+  return '$' + Math.abs(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function totalDisponible() {
+  return state.debito
+    .filter(c => !c.reservado)
+    .reduce((a, c) => a + c.saldo, 0);
+}
+
+function render() {
+  // Actualizar header
+  document.getElementById('total-display').textContent = fmt(totalDisponible());
+
+  const now = new Date();
+  document.getElementById('fecha').textContent = now.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+
+  const content = document.getElementById('content');
+
+  if (currentTab === 'inicio') renderInicio(content);
+  else if (currentTab === 'cuentas') renderCuentas(content);
+  else if (currentTab === 'movimientos') renderMovimientos(content);
+  else if (currentTab === 'credito') renderCredito(content);
+}
+
+// ============================================================
+// TAB: INICIO
+// ============================================================
+function renderInicio(el) {
+  const totDebito = state.debito.filter(c => c.tipo === 'debito' && !c.reservado).reduce((a,c) => a+c.saldo, 0);
+  const totVales  = state.debito.filter(c => c.tipo === 'vales').reduce((a,c) => a+c.saldo, 0);
+  const totCred   = state.credito.reduce((a,c) => a+c.proximoPago, 0);
+  const ultimos   = [...state.movimientos].sort((a,b) => b.ts - a.ts).slice(0, 5);
+
+  el.innerHTML = `
+    <div class="totales-grid">
+      <div class="total-box">
+        <div class="total-box-label">💳 Débito libre</div>
+        <div class="total-box-value" style="color:var(--green)">${fmt(totDebito)}</div>
+      </div>
+      <div class="total-box">
+        <div class="total-box-label">🛒 Vales</div>
+        <div class="total-box-value" style="color:var(--accent2)">${fmt(totVales)}</div>
+      </div>
+    </div>
+
+    <div class="ahorro-card">
+      <div class="ahorro-title">🏦 Ahorro</div>
+      <div class="ahorro-value">${fmt(state.ahorro)}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <span class="card-label">💸 Próximos pagos TDC</span>
+      </div>
+      <div style="margin-top:12px; font-size:28px; font-weight:700; color:var(--red)">${fmt(totCred)}</div>
+      <div class="card-sub">Suma de próximos cortes</div>
+    </div>
+
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      Últimos movimientos
+      ${state.movimientos.length > 0 ? `<span class="edit-toggle" onclick="setTab('movimientos')">Ver todos →</span>` : ''}
+    </div>
+    ${ultimos.length === 0
+      ? `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Aún no hay movimientos</div></div>`
+      : `<div class="card">${ultimos.map(m => gastaItem(m, false)).join('')}</div>`
+    }
+  `;
+}
+
+// ============================================================
+// TAB: CUENTAS
+// ============================================================
+function renderCuentas(el) {
+  const debList = state.debito.filter(c => c.tipo === 'debito');
+  const valList = state.debito.filter(c => c.tipo === 'vales');
+
+  el.innerHTML = `
+    <div class="section-title">Débito</div>
+    <div class="card">
+      ${debList.map(c => `
+        <div class="cuenta-item">
+          <div class="cuenta-icon" style="background:${c.color}22">${c.emoji}</div>
+          <div class="cuenta-info">
+            <div class="cuenta-name">${c.nombre}</div>
+            <div class="cuenta-sub">${c.reservado ? '⚠️ Reservado para pago TDC' : 'Disponible'}</div>
+          </div>
+          <div class="cuenta-amount ${c.saldo === 0 ? '' : 'pos'}">${fmt(c.saldo)}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="section-title">Vales</div>
+    <div class="card">
+      ${valList.map(c => `
+        <div class="cuenta-item">
+          <div class="cuenta-icon" style="background:${c.color}22">${c.emoji}</div>
+          <div class="cuenta-info">
+            <div class="cuenta-name">${c.nombre}</div>
+            <div class="cuenta-sub">Saldo de vales</div>
+          </div>
+          <div class="cuenta-amount pos">${fmt(c.saldo)}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="nota-reservado">
+      ℹ️ El saldo de HeyBanco Débito está marcado como reservado para pago de TDC y no cuenta en tu total disponible.
+    </div>
+  `;
+}
+
+// ============================================================
+// TAB: MOVIMIENTOS
+// ============================================================
+let editMode = false;
+
+function renderMovimientos(el) {
+  const movs = [...state.movimientos].sort((a,b) => b.ts - a.ts);
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-title" style="margin:0">Todos los movimientos (${movs.length})</div>
+      ${movs.length > 0 ? `<span class="edit-toggle" onclick="toggleEdit()">✏️ ${editMode ? 'Listo' : 'Editar'}</span>` : ''}
+    </div>
+    ${movs.length === 0
+      ? `<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Registra tu primer movimiento con el botón +</div></div>`
+      : `<div class="card">${movs.map(m => gastaItem(m, editMode)).join('')}</div>`
+    }
+  `;
+}
+
+function toggleEdit() {
+  editMode = !editMode;
+  render();
+}
+
+function gastaItem(m, withDelete) {
+  const cuenta = [...state.debito, ...state.credito].find(c => c.id === m.cuentaId);
+  const nombre = cuenta ? cuenta.nombre : m.cuentaId;
+  const esIngreso = m.tipo === 'ingreso';
+  const fecha = new Date(m.ts).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  const msiTag = m.tipoPago === 'msi' ? ` · ${m.msi}MSI` : '';
+
+  return `
+    <div class="gasto-item ${withDelete ? 'editing' : ''}" id="mov-${m.id}">
+      <div class="gasto-icon" style="background:${esIngreso ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.1)'}">${m.categoria.split(' ')[0]}</div>
+      <div class="gasto-info">
+        <div class="gasto-desc">${m.descripcion}</div>
+        <div class="gasto-meta">${fecha} · ${nombre}${msiTag}</div>
+      </div>
+      <div class="gasto-amount ${esIngreso ? 'income' : 'credit'}">${esIngreso ? '+' : '-'}${fmt(m.monto)}</div>
+      ${withDelete ? `<button class="delete-btn" onclick="borrarMovimiento('${m.id}')">✕</button>` : ''}
+    </div>
+  `;
+}
+
+// ============================================================
+// TAB: CRÉDITO
+// ============================================================
+function renderCredito(el) {
+  el.innerHTML = `
+    <div class="section-title">Tarjetas de Crédito</div>
+    ${state.credito.map(c => {
+      const pct = Math.min(100, Math.round((c.saldoUsado / c.limite) * 100));
+      const fillClass = pct > 80 ? 'danger' : pct > 50 ? 'warn' : '';
+      const msiDe = state.msiActivos.filter(m => m.cuentaId === c.id && m.mesesRestantes > 0);
+      const totalMSI = msiDe.reduce((a,m) => a + m.abonoPorMes, 0);
+
+      return `
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-row" style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:40px;height:40px;border-radius:12px;background:${c.color}22;display:flex;align-items:center;justify-content:center;font-size:18px">${c.emoji}</div>
+              <div>
+                <div style="font-size:15px;font-weight:700">${c.nombre}</div>
+                <div style="font-size:11px;color:var(--text3)">Corte día ${c.fechaCorte}</div>
+              </div>
+            </div>
+            <span class="badge ${pct > 80 ? 'badge-red' : pct > 50 ? 'badge-yellow' : 'badge-green'}">${pct}%</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <div style="font-size:11px;color:var(--text3)">Saldo usado</div>
+              <div style="font-size:18px;font-weight:700;color:var(--red)">${fmt(c.saldoUsado)}</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3)">Próximo pago</div>
+              <div style="font-size:18px;font-weight:700;color:var(--yellow)">${fmt(c.proximoPago)}</div>
+            </div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${pct}%"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px">Límite ${fmt(c.limite)}</div>
+          ${msiDe.length > 0 ? `
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+              <div style="font-size:11px;color:var(--accent);margin-bottom:6px">MSI activos (${fmt(totalMSI)}/mes)</div>
+              ${msiDe.map(m => `
+                <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
+                  <span style="color:var(--text2)">${m.descripcion} · ${m.mesesRestantes}/${m.meses} meses</span>
+                  <span style="color:var(--accent)">${fmt(m.abonoPorMes)}/mes</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+let modalTipo = 'gasto';
+let modalPago = 'contado';
+let modalMSI  = null;
+let modalCat  = '🛒 Compras';
+
+function openModal() {
+  modalTipo = 'gasto';
+  modalPago = 'contado';
+  modalMSI  = null;
+  modalCat  = '🛒 Compras';
+
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-monto').value = '';
+  document.getElementById('btn-gasto').classList.add('active');
+  document.getElementById('btn-ingreso').classList.remove('active');
+  document.getElementById('pago-row').style.display = 'block';
+  document.getElementById('msi-row').classList.remove('show');
+
+  poblarSelectCuentas();
+  setPago('contado');
+  setCat('🛒 Compras');
+
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('inp-desc').focus(), 350);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function setTipo(t) {
+  modalTipo = t;
+  document.getElementById('btn-gasto').classList.toggle('active', t === 'gasto');
+  document.getElementById('btn-ingreso').classList.toggle('active', t === 'ingreso');
+  document.getElementById('pago-row').style.display = t === 'gasto' ? 'block' : 'none';
+  document.getElementById('msi-row').classList.remove('show');
+  poblarSelectCuentas();
+  document.getElementById('label-cuenta').textContent = t === 'ingreso' ? '¿Dónde te cayó?' : 'Tarjeta / Cuenta';
+}
+
+function poblarSelectCuentas() {
+  const sel = document.getElementById('sel-cuenta');
+  sel.innerHTML = '';
+  if (modalTipo === 'gasto') {
+    state.credito.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.nombre;
+      sel.appendChild(opt);
+    });
+    state.debito.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.nombre + (c.tipo === 'vales' ? ' (Vales)' : '');
+      sel.appendChild(opt);
+    });
+  } else {
+    state.debito.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.nombre + (c.tipo === 'vales' ? ' (Vales)' : '');
+      sel.appendChild(opt);
+    });
+  }
+  onCuentaChange();
+}
+
+function onCuentaChange() {
+  const sel = document.getElementById('sel-cuenta');
+  const cid = sel.value;
+  const esCredito = state.credito.some(c => c.id === cid);
+  document.getElementById('pago-row').style.display = (modalTipo === 'gasto' && esCredito) ? 'block' : 'none';
+  if (!esCredito) {
+    document.getElementById('msi-row').classList.remove('show');
+    modalPago = 'contado';
+  }
+}
+
+function setPago(p) {
+  modalPago = p;
+  document.querySelectorAll('#chips-pago .chip').forEach(c => c.classList.toggle('active', c.textContent.toLowerCase() === p));
+  document.getElementById('msi-row').classList.toggle('show', p === 'msi');
+  if (p === 'contado') modalMSI = null;
+}
+
+function setMSI(n) {
+  modalMSI = n;
+  document.querySelectorAll('#chips-msi .chip').forEach(c => c.classList.toggle('active', c.textContent === n + ' MSI'));
+}
+
+function setCat(cat) {
+  modalCat = cat;
+  document.querySelectorAll('#chips-cat .chip').forEach(c => c.classList.toggle('active', c.textContent === cat));
+}
+
+function guardarMovimiento() {
+  const desc  = document.getElementById('inp-desc').value.trim();
+  const monto = parseFloat(document.getElementById('inp-monto').value);
+  const cid   = document.getElementById('sel-cuenta').value;
+
+  if (!desc) { toast('Escribe una descripción'); return; }
+  if (!monto || monto <= 0) { toast('Ingresa un monto válido'); return; }
+  if (modalPago === 'msi' && !modalMSI) { toast('Selecciona los meses de MSI'); return; }
+
+  const id = Date.now().toString();
+  const mov = {
+    id, descripcion: desc, monto, cuentaId: cid,
+    tipo: modalTipo, tipoPago: modalPago, msi: modalMSI,
+    categoria: modalCat, ts: Date.now()
+  };
+
+  state.movimientos.push(mov);
+
+  if (modalTipo === 'gasto') {
+    const cred = state.credito.find(c => c.id === cid);
+    if (cred) {
+      cred.saldoUsado += monto;
+      if (modalPago === 'contado') {
+        cred.proximoPago += monto;
+      } else if (modalPago === 'msi') {
+        const abono = monto / modalMSI;
+        cred.proximoPago += abono;
+        state.msiActivos.push({
+          id, descripcion: desc, cuentaId: cid,
+          total: monto, meses: modalMSI, mesesRestantes: modalMSI,
+          abonoPorMes: abono, fechaInicio: Date.now()
+        });
+      }
+    } else {
+      const deb = state.debito.find(c => c.id === cid);
+      if (deb) deb.saldo = Math.max(0, deb.saldo - monto);
+    }
+  } else {
+    const deb = state.debito.find(c => c.id === cid);
+    if (deb) deb.saldo += monto;
+  }
+
+  saveState();
+  closeModal();
+  toast(modalTipo === 'gasto' ? '✅ Gasto registrado' : '✅ Ingreso registrado');
+  editMode = false;
+  render();
+}
+
+// ============================================================
+// BORRAR MOVIMIENTO
+// ============================================================
+function borrarMovimiento(id) {
+  const mov = state.movimientos.find(m => m.id === id);
+  if (!mov) return;
+
+  if (mov.tipo === 'gasto') {
+    const cred = state.credito.find(c => c.id === mov.cuentaId);
+    if (cred) {
+      cred.saldoUsado = Math.max(0, cred.saldoUsado - mov.monto);
+      if (mov.tipoPago === 'contado') {
+        cred.proximoPago = Math.max(0, cred.proximoPago - mov.monto);
+      } else if (mov.tipoPago === 'msi') {
+        const msiIdx = state.msiActivos.findIndex(m => m.id === id);
+        if (msiIdx !== -1) {
+          cred.proximoPago = Math.max(0, cred.proximoPago - state.msiActivos[msiIdx].abonoPorMes);
+          state.msiActivos.splice(msiIdx, 1);
+        }
+      }
+    } else {
+      const deb = state.debito.find(c => c.id === mov.cuentaId);
+      if (deb) deb.saldo += mov.monto;
+    }
+  } else {
+    const deb = state.debito.find(c => c.id === mov.cuentaId);
+    if (deb) deb.saldo = Math.max(0, deb.saldo - mov.monto);
+  }
+
+  state.movimientos = state.movimientos.filter(m => m.id !== id);
+  saveState();
+  toast('🗑️ Movimiento eliminado');
+  render();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+</script>
+</body>
+</html>
