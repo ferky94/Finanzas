@@ -52,9 +52,9 @@
       "ini": "BB",
       "color": "#1a3a6b",
       "nombre": "BBVA TDC",
-      "saldoUsado": 6601.36,
+      "saldoUsado": 6501.36,
       "corte": 7,
-      "pago": 6601.36,
+      "pago": 6501.36,
       "limite": 20000,
       "nota": ""
     },
@@ -105,19 +105,6 @@
     }
   ],
   "ahorro": 1000,
-  "movs": [
-    {
-      "id": "1781729250624",
-      "desc": "Test",
-      "monto": 100,
-      "cid": "bbva_c",
-      "tipo": "gasto",
-      "tipoPago": "contado",
-      "msi": null,
-      "cat": "Compras",
-      "nota": "",
-      "ts": 1781729250624
-    }
-  ],
+  "movs": [],
   "msi": []
 }
