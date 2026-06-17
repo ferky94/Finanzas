@@ -810,7 +810,8 @@ async function loadFromGitHub() {
       _dataSHA = file.sha;
       const decoded = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
       _dataCache = JSON.parse(decoded);
-      // Sync to localStorage
+      // Clear ALL localStorage first, then sync from GitHub
+      try { localStorage.clear(); } catch(e){}
       Object.entries(_dataCache).forEach(([k,v]) => {
         try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
       });
@@ -902,8 +903,13 @@ function getDisponible() {
   return CONFIG.ingresos - CONFIG.gastosFijos - CONFIG.compromisos - getTotalVariables() - CONFIG.ahorro;
 }
 function getFondoAhorrado() {
-  const delHistorial = historial.reduce((a,m) => a + (Number(m.ahorro)||0), 0);
-  return CONFIG.fondoInicial + delHistorial;
+  // Suma depósitos registrados como tipo 'ahorro_nu' en ingresos
+  const ingresos = getData('ingresos_ferky', []);
+  const delIngresos = ingresos
+    .filter(i => i.tipo === 'ahorro_nu' || i.nombre === '🏦 Ahorro Nu' || i.nombre === '🏦 Ahorro fondo emergencia')
+    .reduce((a,i) => a + Number(i.monto), 0);
+  const delHistorial = getData('historial_ferky', []).reduce((a,m) => a + (Number(m.ahorro)||0), 0);
+  return CONFIG.fondoInicial + delHistorial + delIngresos;
 }
 
 function renderDashboard() {
