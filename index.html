@@ -231,7 +231,11 @@ async function loadGH(){
     var d=await ghReq('GET');
     if(d&&d.content){
       ghSha=d.sha;
-      S=JSON.parse(atob(d.content.replace(/\n/g,'')));
+      var loaded=JSON.parse(atob(d.content.replace(/\n/g,'')));
+      // Validate format - if old format (has 'movimientos' or 'emoji'), use BASE instead
+      var isOld=loaded.movimientos!==undefined||loaded.msiActivos!==undefined||(loaded.debito&&loaded.debito[0]&&loaded.debito[0].emoji!==undefined);
+      if(isOld){S=JSON.parse(JSON.stringify(BASE));await saveGH();}
+      else{S=loaded;}
       localStorage.setItem('fin_bk',JSON.stringify(S));
       syncUI('ok');
     }else{await saveGH();}
@@ -241,7 +245,11 @@ async function loadGH(){
 
 function loadLocal(){
   var b=localStorage.getItem('fin_bk');
-  if(b)try{S=JSON.parse(b);}catch(e){}
+  if(b)try{
+    var p=JSON.parse(b);
+    var isOld=p.movimientos!==undefined||p.msiActivos!==undefined||(p.debito&&p.debito[0]&&p.debito[0].emoji!==undefined);
+    if(!isOld)S=p;
+  }catch(e){}
 }
 
 async function saveGH(){
