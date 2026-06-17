@@ -6,7 +6,7 @@
       "color": "#1a3a6b",
       "nombre": "BBVA",
       "tipo": "debito",
-      "saldo": 0,
+      "saldo": 100,
       "res": false
     },
     {
@@ -117,6 +117,18 @@
       "cat": "Compras",
       "nota": "",
       "ts": 1781729250624
+    },
+    {
+      "id": "1781729268903",
+      "desc": "Fondo",
+      "monto": 100,
+      "cid": "bbva_d",
+      "tipo": "ingreso",
+      "tipoPago": "contado",
+      "msi": null,
+      "cat": "Compras",
+      "nota": "",
+      "ts": 1781729268903
     }
   ],
   "msi": []
