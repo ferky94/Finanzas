@@ -280,12 +280,13 @@ const INITIAL_STATE = {
     { id: 'sivale_r',  nombre: 'Si Vale Restaurante', tipo: 'vales',  emoji: '🍽️', color: '#7a2d2d', saldo: 4730.00, reservado: false },
   ],
   credito: [
-    { id: 'bbva_cre',  nombre: 'BBVA TDC',          emoji: '🏦', color: '#1a3a6b', saldoUsado: 6501.36, fechaCorte: 7,  proximoPago: 6501.36, limite: 20000 },
-    { id: 'hey_cre',   nombre: 'HeyBanco TDC',      emoji: '💙', color: '#0050ff', saldoUsado: 2602.33, fechaCorte: 25, proximoPago: 2602.33, limite: 10000 },
-    { id: 'mp_cre',    nombre: 'Mercado Pago TDC',  emoji: '💳', color: '#00b1ea', saldoUsado: 5308.16, fechaCorte: 10, proximoPago: 2859.76, limite: 15000 },
-    { id: 'banorte',   nombre: 'Banorte TDC',       emoji: '🔴', color: '#c0392b', saldoUsado: 0,       fechaCorte: 1,  proximoPago: 0,       limite: 10000 },
+    { id: 'bbva_cre',  nombre: 'BBVA TDC',             emoji: '🏦', color: '#1a3a6b', saldoUsado: 6501.36,  fechaCorte: 7,  proximoPago: 6501.36, limite: 20000,  nota: '' },
+    { id: 'hey_cre',   nombre: 'HeyBanco TDC',         emoji: '💙', color: '#0050ff', saldoUsado: 2602.33,  fechaCorte: 25, proximoPago: 2602.33, limite: 10000,  nota: '' },
+    { id: 'mp_cre',    nombre: 'Mercado Pago TDC',     emoji: '💳', color: '#00b1ea', saldoUsado: 5308.16,  fechaCorte: 10, proximoPago: 2859.76, limite: 15000,  nota: 'Resto $2,448.40 se va a julio' },
+    { id: 'banorte',   nombre: 'Banorte TDC',          emoji: '🔴', color: '#c0392b', saldoUsado: 0,        fechaCorte: 1,  proximoPago: 0,       limite: 10000,  nota: '' },
+    { id: 'mp_cst',    nombre: 'Crédito Sin Tarjeta',  emoji: '🏧', color: '#00856f', saldoUsado: 35622.12, fechaCorte: 11, proximoPago: 2968.51, limite: 35622.12, nota: '12 MSI · 1 pago realizado · Próximo 11 jul', esCreditoPersonal: true },
   ],
-  ahorro: 0,
+  ahorro: 1000,
   movimientos: [],
   msiActivos: [], // { id, cuentaId, total, meses, mesesRestantes, abonoPorMes, fechaInicio }
 };
@@ -492,6 +493,38 @@ function renderCredito(el) {
       const msiDe = state.msiActivos.filter(m => m.cuentaId === c.id && m.mesesRestantes > 0);
       const totalMSI = msiDe.reduce((a,m) => a + m.abonoPorMes, 0);
 
+      if (c.esCreditoPersonal) {
+        const pagosRealizados = 1;
+        const pagosRestantes = c.limite > 0 ? Math.round(c.saldoUsado / c.proximoPago) : 11;
+        return `
+          <div class="card" style="margin-bottom:12px;border-color:#00856f44">
+            <div class="card-row" style="margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:40px;height:40px;border-radius:12px;background:#00856f22;display:flex;align-items:center;justify-content:center;font-size:18px">${c.emoji}</div>
+                <div>
+                  <div style="font-size:15px;font-weight:700">${c.nombre}</div>
+                  <div style="font-size:11px;color:#00b894">Mercado Pago · Pago día ${c.fechaCorte}</div>
+                </div>
+              </div>
+              <span class="badge" style="background:#00856f22;color:#00b894">12 MSI</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div style="font-size:11px;color:var(--text3)">Saldo total</div>
+                <div style="font-size:18px;font-weight:700;color:var(--red)">${fmt(c.saldoUsado)}</div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text3)">Próximo pago</div>
+                <div style="font-size:18px;font-weight:700;color:var(--yellow)">${fmt(c.proximoPago)}</div>
+              </div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.round((1/12)*100)}%;background:#00b894"></div></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:6px">1 de 12 pagos realizados · ${fmt(c.proximoPago)}/mes</div>
+            ${c.nota ? `<div style="margin-top:8px;font-size:11px;color:#00b894;opacity:0.8">ℹ️ ${c.nota}</div>` : ''}
+          </div>
+        `;
+      }
+
       return `
         <div class="card" style="margin-bottom:12px">
           <div class="card-row" style="margin-bottom:12px">
@@ -516,6 +549,7 @@ function renderCredito(el) {
           </div>
           <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${pct}%"></div></div>
           <div style="font-size:10px;color:var(--text3);margin-top:6px">Límite ${fmt(c.limite)}</div>
+          ${c.nota ? `<div style="margin-top:6px;font-size:11px;color:var(--text3)">ℹ️ ${c.nota}</div>` : ''}
           ${msiDe.length > 0 ? `
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
               <div style="font-size:11px;color:var(--accent);margin-bottom:6px">MSI activos (${fmt(totalMSI)}/mes)</div>
@@ -586,7 +620,8 @@ function poblarSelectCuentas() {
   if (modalTipo === 'gasto') {
     state.credito.forEach(c => {
       const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.nombre;
+      opt.value = c.id;
+      opt.textContent = c.esCreditoPersonal ? '🏧 ' + c.nombre + ' (MP)' : c.nombre;
       sel.appendChild(opt);
     });
     state.debito.forEach(c => {
