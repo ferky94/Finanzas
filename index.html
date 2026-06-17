@@ -580,12 +580,14 @@ function getLiquidezReal() {
 }
 
 function getFondoAhorrado() {
+  // fondoInicial ya está dentro de ingresos_ferky como registro
+  // NO sumar CONFIG.fondoInicial por separado para evitar duplicados
   const ingresos = getData('ingresos_ferky',[]);
   const delIngresos = ingresos
     .filter(i=>i.tipo==='ahorro_nu'||i.nombre==='🏦 Ahorro Nu')
     .reduce((a,i)=>a+Number(i.monto),0);
   const delHistorial = getData('historial_ferky',[]).reduce((a,m)=>a+(Number(m.ahorro)||0),0);
-  return CONFIG.fondoInicial + delIngresos + delHistorial;
+  return delIngresos + delHistorial || CONFIG.fondoInicial;
 }
 
 // ══════════════════════════════════════════
@@ -1165,6 +1167,8 @@ document.getElementById('modalGasto').addEventListener('click',function(e){if(e.
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
+  // Always clear stale localStorage on load
+  try { localStorage.clear(); } catch(e){}
   loadFromGitHub();
   if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
     const btn=document.getElementById('btnNotif');
