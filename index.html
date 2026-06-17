@@ -1881,12 +1881,19 @@ document.getElementById('modalIngreso').addEventListener('click', function(e){
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Version check — clear cache if outdated
-  const APP_VERSION = '2.0';
+  // Seed initial data if app is fresh
+  const APP_VERSION = '3.0';
   if(localStorage.getItem('app_version') !== APP_VERSION) {
     try { localStorage.clear(); } catch(e){}
     localStorage.setItem('app_version', APP_VERSION);
-    localStorage.removeItem('gh_token'); // Force token re-entry
+    // Seed correct base data
+    localStorage.setItem('pagos_estado', JSON.stringify({"0":"pending","1":"pending","2":"pending","3":"pending"}));
+    localStorage.setItem('ingresos_ferky', JSON.stringify([{
+      "tipo":"ahorro_nu","nombre":"🏦 Ahorro Nu","monto":1000,
+      "fecha":"2026-06-15","nota":"Primer depósito fondo emergencia","id":1718409600000
+    }]));
+    localStorage.setItem('gastos_ferky', JSON.stringify([]));
+    localStorage.setItem('historial_ferky', JSON.stringify([]));
   }
   // Load from GitHub first, then render
   loadFromGitHub();
