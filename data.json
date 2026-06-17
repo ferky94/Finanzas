@@ -52,9 +52,9 @@
       "ini": "BB",
       "color": "#1a3a6b",
       "nombre": "BBVA TDC",
-      "saldoUsado": 6501.36,
+      "saldoUsado": 6531.36,
       "corte": 7,
-      "pago": 6501.36,
+      "pago": 6531.36,
       "limite": 20000,
       "nota": ""
     },
@@ -105,6 +105,19 @@
     }
   ],
   "ahorro": 1000,
-  "movs": [],
+  "movs": [
+    {
+      "id": "1781729779209",
+      "desc": "Jugo",
+      "monto": 30,
+      "cid": "bbva_c",
+      "tipo": "gasto",
+      "tipoPago": "contado",
+      "msi": null,
+      "cat": "Comida",
+      "nota": "",
+      "ts": 1781729779209
+    }
+  ],
   "msi": []
 }
