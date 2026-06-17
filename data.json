@@ -4,16 +4,16 @@
       "id": "bbva_deb",
       "nombre": "BBVA",
       "tipo": "debito",
-      "emoji": "ð¦",
+      "emoji": "Ã°ÂÂÂ¦",
       "color": "#1a3a6b",
-      "saldo": 0,
+      "saldo": 100,
       "reservado": false
     },
     {
       "id": "hey_deb",
       "nombre": "HeyBanco",
       "tipo": "debito",
-      "emoji": "ð",
+      "emoji": "Ã°ÂÂÂ",
       "color": "#0050ff",
       "saldo": 2602.36,
       "reservado": true,
@@ -23,7 +23,7 @@
       "id": "mp_deb",
       "nombre": "Mercado Pago",
       "tipo": "debito",
-      "emoji": "ð³",
+      "emoji": "Ã°ÂÂÂ³",
       "color": "#00b1ea",
       "saldo": 2800.35,
       "reservado": false
@@ -32,7 +32,7 @@
       "id": "sivale_d",
       "nombre": "Si Vale Despensa",
       "tipo": "vales",
-      "emoji": "ð",
+      "emoji": "Ã°ÂÂÂ",
       "color": "#2d7a3a",
       "saldo": 3351,
       "reservado": false
@@ -41,7 +41,7 @@
       "id": "sivale_r",
       "nombre": "Si Vale Restaurante",
       "tipo": "vales",
-      "emoji": "ð½ï¸",
+      "emoji": "Ã°ÂÂÂ½Ã¯Â¸Â",
       "color": "#7a2d2d",
       "saldo": 4730,
       "reservado": false
@@ -51,7 +51,7 @@
     {
       "id": "bbva_cre",
       "nombre": "BBVA TDC",
-      "emoji": "ð¦",
+      "emoji": "Ã°ÂÂÂ¦",
       "color": "#1a3a6b",
       "saldoUsado": 6601.36,
       "fechaCorte": 7,
@@ -62,7 +62,7 @@
     {
       "id": "hey_cre",
       "nombre": "HeyBanco TDC",
-      "emoji": "ð",
+      "emoji": "Ã°ÂÂÂ",
       "color": "#0050ff",
       "saldoUsado": 2602.33,
       "fechaCorte": 25,
@@ -73,7 +73,7 @@
     {
       "id": "mp_cre",
       "nombre": "Mercado Pago TDC",
-      "emoji": "ð³",
+      "emoji": "Ã°ÂÂÂ³",
       "color": "#00b1ea",
       "saldoUsado": 5308.16,
       "fechaCorte": 10,
@@ -84,7 +84,7 @@
     {
       "id": "banorte",
       "nombre": "Banorte TDC",
-      "emoji": "ð´",
+      "emoji": "Ã°ÂÂÂ´",
       "color": "#c0392b",
       "saldoUsado": 0,
       "fechaCorte": 1,
@@ -94,14 +94,14 @@
     },
     {
       "id": "mp_cst",
-      "nombre": "CrÃ©dito Sin Tarjeta",
-      "emoji": "ð§",
+      "nombre": "CrÃÂ©dito Sin Tarjeta",
+      "emoji": "Ã°ÂÂÂ§",
       "color": "#00856f",
       "saldoUsado": 35622.12,
       "fechaCorte": 11,
       "proximoPago": 2968.51,
       "limite": 35622.12,
-      "nota": "12 MSI Â· 1 pago realizado Â· PrÃ³ximo 11 jul",
+      "nota": "12 MSI ÃÂ· 1 pago realizado ÃÂ· PrÃÂ³ximo 11 jul",
       "esCreditoPersonal": true
     }
   ],
@@ -115,9 +115,21 @@
       "tipo": "gasto",
       "tipoPago": "contado",
       "msi": null,
-      "categoria": "🛒 Compras",
+      "categoria": "ð Compras",
       "nota": "",
       "ts": 1781727618319
+    },
+    {
+      "id": "1781727648150",
+      "descripcion": "Fondo",
+      "monto": 100,
+      "cuentaId": "bbva_deb",
+      "tipo": "ingreso",
+      "tipoPago": "contado",
+      "msi": null,
+      "categoria": "💰 Nómina",
+      "nota": "",
+      "ts": 1781727648150
     }
   ],
   "msiActivos": []
