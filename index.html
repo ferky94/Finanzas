@@ -625,6 +625,7 @@ const CONFIG = {
   gastosFijos: 12725, // Renta $2,000 + Carro $10,725.18
   compromisos: 12721.60, // Pagos reales julio: Hey+BBVA+MP TC+MP Crédito
   fondoMeta: 50000,
+  fondoInicial: 1000,  // Ya depositado en Nu
   tasaAnual: 0.068,
   // Saldos reales de HOY (15 junio 2026)
   saldoMP:        2796.28,   // MP Débito libre
@@ -896,7 +897,8 @@ function getDisponible() {
   return CONFIG.ingresos - CONFIG.gastosFijos - CONFIG.compromisos - getTotalVariables() - CONFIG.ahorro;
 }
 function getFondoAhorrado() {
-  return historial.reduce((a,m) => a + (Number(m.ahorro)||0), 0);
+  const delHistorial = historial.reduce((a,m) => a + (Number(m.ahorro)||0), 0);
+  return CONFIG.fondoInicial + delHistorial;
 }
 
 function renderDashboard() {
@@ -929,10 +931,19 @@ function renderDashboard() {
 
   // KPIs
   // Vales en header
+  // Vales — descontar lo gastado con vales
+  const gastosValeD = getData('gastos_ferky',[])
+    .filter(g => g.medio === '🛒 Si Vale Despensa')
+    .reduce((a,g) => a + Number(g.monto), 0);
+  const gastosValeR = getData('gastos_ferky',[])
+    .filter(g => g.medio === '🍽️ Si Vale Restaurante')
+    .reduce((a,g) => a + Number(g.monto), 0);
+  const saldoValeD = Math.max(CONFIG.valesDespensa - gastosValeD, 0);
+  const saldoValeR = Math.max(CONFIG.valesRestaurante - gastosValeR, 0);
   if(document.getElementById('valesDespensa'))
-    document.getElementById('valesDespensa').textContent = fmt(CONFIG.valesDespensa);
+    document.getElementById('valesDespensa').textContent = fmt(saldoValeD);
   if(document.getElementById('valesRestaurante'))
-    document.getElementById('valesRestaurante').textContent = fmt(CONFIG.valesRestaurante);
+    document.getElementById('valesRestaurante').textContent = fmt(saldoValeR);
   // KPIs
   document.getElementById('kpiVariables').textContent = fmtShort(vars);
   const fondoAcum = getFondoAhorrado();
@@ -1002,7 +1013,7 @@ function renderDashboard() {
   const r = CONFIG.tasaAnual / 12;
   const n = mesesMeta;
   const vf = fondo * Math.pow(1+r, n) + CONFIG.ahorro * ((Math.pow(1+r,n)-1)/r);
-  document.getElementById('fondoAhorrado').textContent  = fmt(fondo > 0 ? fondo : 1000) + ' ahorrados';
+  document.getElementById('fondoAhorrado').textContent  = fmt(fondo) + ' ahorrados';
   document.getElementById('fondoProgress').style.width  = pct + '%';
   document.getElementById('fondoMeses').textContent     = mesesMeta + ' meses';
   document.getElementById('fondoProyectado').textContent = fmt(vf);
