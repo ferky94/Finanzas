@@ -53,9 +53,9 @@
       "nombre": "BBVA TDC",
       "emoji": "Ã°ÂÂÂ¦",
       "color": "#1a3a6b",
-      "saldoUsado": 6601.36,
+      "saldoUsado": 6501.36,
       "fechaCorte": 7,
-      "proximoPago": 6601.36,
+      "proximoPago": 6501.36,
       "limite": 20000,
       "nota": ""
     },
@@ -106,19 +106,6 @@
     }
   ],
   "ahorro": 1000,
-  "movimientos": [
-    {
-      "id": "1781727618319",
-      "descripcion": "Comida",
-      "monto": 100,
-      "cuentaId": "bbva_cre",
-      "tipo": "gasto",
-      "tipoPago": "contado",
-      "msi": null,
-      "categoria": "ð Compras",
-      "nota": "",
-      "ts": 1781727618319
-    }
-  ],
+  "movimientos": [],
   "msiActivos": []
 }
