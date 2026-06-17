@@ -6,7 +6,7 @@
       "tipo": "debito",
       "emoji": "Ã°ÂÂÂ¦",
       "color": "#1a3a6b",
-      "saldo": 100,
+      "saldo": 0,
       "reservado": false
     },
     {
@@ -118,18 +118,6 @@
       "categoria": "ð Compras",
       "nota": "",
       "ts": 1781727618319
-    },
-    {
-      "id": "1781727648150",
-      "descripcion": "Fondo",
-      "monto": 100,
-      "cuentaId": "bbva_deb",
-      "tipo": "ingreso",
-      "tipoPago": "contado",
-      "msi": null,
-      "categoria": "💰 Nómina",
-      "nota": "",
-      "ts": 1781727648150
     }
   ],
   "msiActivos": []
