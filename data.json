@@ -24,7 +24,7 @@
       "color": "#00b1ea",
       "nombre": "Mercado Pago",
       "tipo": "debito",
-      "saldo": 2800.35,
+      "saldo": 2200.35,
       "res": false
     },
     {
@@ -117,6 +117,18 @@
       "cat": "Comida",
       "nota": "",
       "ts": 1781729819942
+    },
+    {
+      "id": "1781841663008",
+      "desc": "Vidrio Roto",
+      "monto": 600,
+      "cid": "mp_d",
+      "tipo": "gasto",
+      "tipoPago": "contado",
+      "msi": null,
+      "cat": "Hogar",
+      "nota": "",
+      "ts": 1781841663008
     }
   ],
   "msi": []
